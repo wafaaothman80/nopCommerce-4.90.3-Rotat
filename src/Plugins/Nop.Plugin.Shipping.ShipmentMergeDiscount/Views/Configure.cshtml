@@ -1,0 +1,70 @@
+@model Nop.Plugin.Shipping.ShipmentMergeDiscount.Models.RequirementModel
+
+@* Hidden fields required so the POST action knows which discount/requirement to save *@
+@Html.HiddenFor(m => m.DiscountId)
+@Html.HiddenFor(m => m.RequirementId)
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h4>Shipment Consolidation Discount</h4>
+    </div>
+    <div class="panel-body">
+        <p>
+            This requirement is met automatically when the customer has at least
+            <strong>@Model.MinimumEligibleOrders</strong> pending, unshipped order(s)
+            going to the same shipping address.
+        </p>
+        <p>
+            When eligible, the customer receives a
+            @if (Model.UsePercentage)
+            {
+                <strong>@Model.DiscountPercentage%</strong>
+            }
+            else
+            {
+                <strong>@Model.DiscountAmount.ToString("C")</strong>
+            }
+            discount on their current order's shipping cost, displayed as
+            "<em>Shipment Consolidation Discount</em>" in the checkout summary.
+        </p>
+        @if (!Model.PluginEnabled)
+        {
+            <div class="alert alert-warning">
+                <strong>Note:</strong> The Shipment Merge Discount plugin is currently
+                <strong>disabled</strong>. Enable it from
+                <em>Configuration → Plugins → Shipment Merge Discount → Configure</em>.
+            </div>
+        }
+        <p class="text-muted">
+            No per-requirement settings are needed — all behaviour is controlled from
+            the plugin's global configuration page.
+        </p>
+    </div>
+</div>
+
+<script>
+    // Notify the NopCommerce discount admin page that this requirement is ready to save.
+    $(function () {
+        $('form:first').on('submit', function () {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("Configure", "ShipmentMergeDiscount", new { area = "Admin" })',
+                data: $('form:first').serialize(),
+                dataType: 'json',
+                success: function (data) {
+                    if (data.errors && data.errors.length > 0) {
+                        var errorText = '';
+                        $.each(data.errors, function (index, item) { errorText += item + '\n'; });
+                        alert(errorText);
+                    } else {
+                        OpenWindow('@(Url.Action("Edit", "Discount", new { area = "Admin" })?discountId=' + @Model.DiscountId, 800, 500, true);
+                    }
+                },
+                error: function (xhr) {
+                    alert('An error occurred.');
+                }
+            });
+            return false;
+        });
+    });
+</script>

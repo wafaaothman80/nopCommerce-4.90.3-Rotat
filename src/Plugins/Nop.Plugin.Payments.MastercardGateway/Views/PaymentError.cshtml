@@ -1,0 +1,16 @@
+﻿@model string
+
+<div class="payment-error-page">
+    <div class="page-title">
+        <h1>@T("Plugins.Payments.Mastercard.PaymentErrorTitle")</h1>
+    </div>
+    <div class="page-body">
+        <div class="error-message">
+            <p>@Model</p>
+        </div>
+        <div class="buttons">
+            <a href="@Url.RouteUrl("ShoppingCart")" class="button-1">@T("ShoppingCart")</a>
+            <a href="@Url.RouteUrl("Homepage")" class="button-2">@T("Homepage")</a>
+        </div>
+    </div>
+</div>

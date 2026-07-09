@@ -1,0 +1,38 @@
+@model int
+@inject NopStation.Plugin.Misc.Core.Services.INopStationCustomerService customerService
+
+<select class="form-control" data-placeholder="Search for a customer" style="width: 100%" id="@Html.IdForModel()" name="@Html.NameForModel()">
+    @if (Model > 0) 
+    {
+        var customer = await customerService.GetCustomerByIdAsync(Model);
+        if (customer != null && !customer.Deleted)
+        {
+            <option value="@Model" selected="selected">@(await customerService.FormatCustomerNameAsync(customer))</option>
+        }
+    }
+</select>
+
+<script>
+    $(document).ready(function () {
+        $('#@Html.IdForModel()').select2({
+            ajax: {
+                url: '@(Url.Action("Customers", "Select2"))',
+                dataType: 'json',
+                data: function (params) {
+                    var query = {
+                        q: params.term,
+                        page: params.page || 1
+                    }
+                    return query;
+                },
+                processResults: function (data, params) {
+                    params.page = params.page || 1;
+
+                    return data;
+                },
+                placeholder: 'Search for a customer',
+                minimumInputLength: 1
+            }
+        });
+    });
+</script>

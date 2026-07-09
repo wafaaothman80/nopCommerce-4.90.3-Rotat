@@ -1,0 +1,73 @@
+@*
+    // ***   ** ****** ****** ****** ******* **     ** ****** ***   ** **** ****
+    // ****  ** **  ** **  ** **  **  **  **  **   **  **  ** ****  ** *    *
+    // ** ** ** **  ** ****** ******  **  **   ** **   ****** ** ** ** *    ***
+    // **  **** **  ** **     **  **  **  **    ***    **  ** **  **** *    *
+    // **   *** ****** **     **  ** *******     *     **  ** **   *** **** ****
+    // **************************************************************************
+    // *                                                                         *
+    // *    NopCommerce Public RESTful API Plugin by NopAdvance team             *
+    // *    Copyright (c) NopAdvance LLP. All Rights Reserved.                   *
+    // *                                                                         *
+    // **************************************************************************
+    // *                                                                         *
+    // *    This software is licensed for use under the terms accepted during    *
+    // *    the purchase of this product. A non-exclusive, non-transferable      *
+    // *    right is granted to use this product on the website for which it was *
+    // *    licensed.                                                            *
+    // *                                                                         *
+    // *    Companies purchasing this product for their customers are permitted, *
+    // *    provided the use complies with the terms outlined in the EULA:       *
+    // *    https://store.nopadvance.com/eula.                                   *
+    // *                                                                         *
+    // *    You may not reverse engineer, decompile, modify, or distribute this  *
+    // *    software without explicit permission from NopAdvance LLP. Any        *
+    // *    violation will result in the termination of your license and may     *
+    // *    lead to legal action.                                                *
+    // *                                                                         *
+    // **************************************************************************
+    // *    Contact: contact@nopadvance.com                                      *
+    // *    Website: https://nopadvance.com                                      *
+    // **************************************************************************
+*@
+@model TokenMaintenanceModel
+@{
+    const string hideDeleteTokensBlockAttributeName = "MaintenancePage.HideDeleteTokensBlock";
+    var hideDeleteTokensBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideDeleteTokensBlockAttributeName);
+}
+<div class="row">
+    <nop-card class="col-md-6 col-xs-12 margin-t-5" asp-name="maintenance-delete-tokens" asp-icon="fas fa-trash-alt"
+              asp-title="@T(LocaleResourceDefaults.DELETE_TOKENS)"
+              asp-hide-block-attribute-name="@hideDeleteTokensBlockAttributeName"
+              asp-hide="@hideDeleteTokensBlock" asp-advanced="false">
+        <div class="card-body">
+            <div class="form-group row">
+                <div class="col-md-6">
+                    <nop-label asp-for="IncludeRevoked" />
+                </div>
+                <div class="col-md-6">
+                    <nop-editor asp-for="IncludeRevoked" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-md-6 offset-md-6">
+                    <button type="submit" name="delete-tokens" class="btn btn-default">
+                        <i class="far fa-trash-alt"></i>
+                        @T("Admin.Common.Delete")
+                    </button>
+                </div>
+            </div>
+            @if (Model.NumberOfDeletedItems.HasValue)
+            {
+                <div class="form-group row">
+                    <div class="col-md-12">
+                        <div class="alert alert-success alert-dismissible no-margin">
+                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                            @string.Format(T(LocaleResourceDefaults.DELETE_TOKENS_TOTAL_DELETED).Text, Model.NumberOfDeletedItems.Value)
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </nop-card>
+</div>

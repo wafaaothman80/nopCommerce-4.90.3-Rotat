@@ -1,0 +1,14 @@
+﻿{
+  "Group": "NopAdvance",
+  "FriendlyName": "NopCommerce Public RESTful API",
+  "SystemName": "NopAdvance.Plugin.PublicAPI",
+  "Version": "1.14",
+  "SupportedVersions": [ "4.90" ],
+  "Author": "NopAdvance team",
+  "DisplayOrder": 1,
+  "FileName": "NopAdvance.Plugin.Misc.PublicAPI.dll",
+  "Description": "This plugin provides api for the nopcommerce's front end methods.",
+  "DependsOnSystemNames": [ "NopAdvance.Core" ],
+  "ProductUrl": "https://store.nopadvance.com/nopcommerce-plugins/public-restful-api-plugin-for-nopcommerce",
+  "HelpUrl": "https://store.nopadvance.com/docs/nopcommerce-frontend-public-restful-web-api?utm_source=customer+store&utm_medium=plugin+admin+menu&utm_campaign=frontend+api+docs"
+}

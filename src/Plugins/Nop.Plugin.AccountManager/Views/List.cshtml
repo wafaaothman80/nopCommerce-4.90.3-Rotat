@@ -1,0 +1,196 @@
+﻿@model AccountManagerSearchModel
+
+@{
+
+    Layout = "_AdminLayout";
+    //page title
+    ViewBag.PageTitle = T("Admin.AccountManager.AccountManagers").Text;
+    //active menu item (system name)
+    NopHtml.SetActiveMenuItemSystemName("AccountManager list");
+}
+
+@{
+    const string hideSearchBlockAttributeName = "AccountManagerListPage.HideSearchBlock";
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
+}
+
+<form asp-controller="AccountManager" asp-action="List" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Admin.AccountManagers.AccountManagers")
+        </h1>
+        <div class="float-right">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus-square"></i>
+                @T("Admin.Common.AddNew")
+            </a>
+            <button type="button" id="sync-erp-btn" class="btn btn-success" onclick="syncERPAccountManagers()">
+                <i class="fas fa-sync-alt"></i>
+                Sync from ERP
+            </button>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                <div class="cards-group">
+                    <div class="card card-default card-search">
+                        <div class="card-body">
+                            <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
+                                <div class="search-text">@T("Admin.Common.Search")</div>
+                                <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                                <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                            </div>
+                            <div class="search-body @(hideSearchBlock ? "closed" : "")">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchEmail" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="SearchEmail" />
+                                            </div>
+                                        </div>
+                                       
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchAccountManagerName" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="SearchAccountManagerName" />
+                                            </div>
+                                        </div>
+                                       
+                                    </div>
+                                   
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                            <nop-label asp-for="SelectedRigionIds" />
+                                            </div>
+                                            <div class="col-md-8">
+                                            <nop-select asp-for="SelectedRigionIds" asp-items="Model.AvailableAccountManagerRigions" asp-multiple="true" />
+                                            <script>
+                                                    $(function() {
+                                                        var rolesIdsInput =
+                                                            $('#@Html.IdFor(model => model.SelectedRigionIds)').select2({
+                                                                closeOnSelect: false,
+                                                                @if (!Model.AvailableAccountManagerRigions.Any())
+                                                                {
+                                                                <text>
+                                                                disabled: true,
+                                                                placeholder: '@T("Admin.AccountManagerRigions.NoManagerRigionsAvailable")',
+                                                                </text>
+                                                                }
+                                                            });
+                                                    });
+                                                </script>
+                                            </div>
+                                            </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="text-center col-12">
+                                    <button type="button" id="search-AccountManager" class="btn btn-primary btn-search">
+                                            <i class="fas fa-search"></i>
+                                            @T("Admin.Common.Search")
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-default">
+                        <div class="card-body">
+
+                            @{
+                                var gridModel = new DataTablesModel
+                                {
+                Name = "AccountManager-grid",
+                UrlRead = new DataUrl("AccountManagerList", "AccountManager", null),
+                SearchButtonId = "search-AccountManager",
+                                    Length = Model.PageSize,
+                                    LengthMenu = Model.AvailablePageSizes,
+                                    Filters = new List<FilterParameter>
+                                                        {
+                                    new FilterParameter(nameof(Model.SelectedRigionIds)),
+                                    new FilterParameter(nameof(Model.SearchEmail)),
+                                    new FilterParameter(nameof(Model.SearchAccountManagerName)),
+                                  
+                                   
+                                    }
+                                };
+
+                           
+                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(AccountManagerModel.Email))
+                                {
+                Title = T("Admin.AccountManager.List.Email").Text
+                                });
+
+                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(AccountManagerModel.AccountManagerName))
+                                {
+                Title = T("Admin.AccountManager.List.AccountManagerName").Text
+                                });
+                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(AccountManagerModel.AccountManagerRigionNames))
+                                {
+                Title = T("Admin.AccountManager.AccountManagerRigionNames").Text,
+                                    Width = "100"
+                                });
+                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(AccountManagerModel.Active))
+            {
+                Title = T("Admin.AccountManager.Fields.Active").Text,
+                Width = "70",
+                ClassName = NopColumnClassDefaults.CenterAll,
+                Render = new RenderBoolean()
+            });
+
+                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(AccountManagerModel.Phone))
+                                    {
+                Title = T("Admin.AccountManager.List.Phone").Text
+                                    });
+
+
+                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(AccountManagerModel.Id))
+                                {
+                                    Title = T("Admin.Common.Edit").Text,
+                                    Width = "80",
+                                    ClassName = NopColumnClassDefaults.Button,
+                                    Render = new RenderButtonEdit(new DataUrl("Edit"))
+                                });
+                            }
+                            @await Html.PartialAsync("Table", gridModel)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </section>
+</form>
+
+<script>
+    function syncERPAccountManagers() {
+        var btn = $('#sync-erp-btn');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Syncing...');
+
+        $.ajax({
+            url: '@Url.Action("SyncERPAccountManagers", "AccountManager")',
+            type: 'POST',
+            data: { __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+            success: function (result) {
+                btn.prop('disabled', false).html('<i class="fas fa-sync-alt"></i> Sync from ERP');
+                if (result.success) {
+                    alert('Sync complete!\nCreated: ' + result.created + '\nUpdated: ' + result.updated + '\nErrors: ' + result.errors);
+                    updateTable('#AccountManager-grid');
+                } else {
+                    alert('Sync failed: ' + result.message);
+                }
+            },
+            error: function () {
+                btn.prop('disabled', false).html('<i class="fas fa-sync-alt"></i> Sync from ERP');
+                alert('Sync request failed. Please try again.');
+            }
+        });
+    }
+</script>

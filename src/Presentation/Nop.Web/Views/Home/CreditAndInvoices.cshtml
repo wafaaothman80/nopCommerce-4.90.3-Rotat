@@ -1,0 +1,856 @@
+﻿@model Nop.Web.Controllers.HomeController.CreditAndInvoicesViewModel
+@{
+    Layout = "_ColumnsTwo";
+    NopHtml.AddTitleParts(T("PageTitle.Account").Text);
+    NopHtml.AppendPageCssClassParts("html-account-page");
+    NopHtml.AppendPageCssClassParts("html-customer-info-page");
+
+    var creditLimit = Model.CreditLimit > 0 ? Model.CreditLimit : (Model.Balance > 0 ? Model.Balance : 1);
+    var usedAmount = creditLimit - Model.AvailableCredit;
+    var usedPct = Math.Min((double)(usedAmount / creditLimit) * 100, 100);
+    var barColor = usedPct >= 90 ? "#e53935" : usedPct >= 70 ? "#FF9800" : "#4CAF50";
+    var openCount = Model.OpenInvoices.Count;
+    var completedCount = Model.CompletedInvoices.Count;
+    var hasCredit = Model.CreditLimit > 0;
+}
+
+@section left {
+    @await Component.InvokeAsync(typeof(CustomerNavigationViewComponent),
+    new { selectedTabId = CustomerNavigationEnum.Info })
+}
+
+<style>
+    .ci-wrap {
+        max-width: 1000px;
+        margin: 20px auto;
+        background: #fff;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 4px 24px rgba(0,0,0,.08);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .ci-title {
+        font-size: 30px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 6px;
+    }
+
+    .ci-desc {
+        color: #777;
+        line-height: 1.7;
+        margin-bottom: 28px;
+        font-size: 14px;
+    }
+
+    /* Credit Card */
+    .credit-card {
+        background: linear-gradient(135deg, #1f278a, #3a46c4);
+        border-radius: 16px;
+        padding: 24px 28px;
+        color: #fff;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .credit-card::after {
+            content: '';
+            position: absolute;
+            right: -60px;
+            top: -60px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.07);
+        }
+
+    .cc-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .cc-label {
+        font-size: 12px;
+        opacity: .7;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: 4px;
+    }
+
+    .cc-value {
+        font-size: 26px;
+        font-weight: 700;
+    }
+
+    .cc-badge {
+        background: rgba(255,255,255,.2);
+        border-radius: 20px;
+        padding: 5px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 4px;
+    }
+
+        .cc-badge.active {
+            background: rgba(76,175,80,.4);
+        }
+
+        .cc-badge.inactive {
+            background: rgba(229,57,53,.4);
+        }
+
+    .cc-bar-track {
+        background: rgba(255,255,255,.2);
+        border-radius: 50px;
+        height: 12px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .cc-bar-fill {
+        height: 100%;
+        border-radius: 50px;
+        width: 0%;
+        transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+
+    .cc-bar-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        opacity: .8;
+    }
+
+    /* ── Credit Action Buttons ── */
+    .credit-actions {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 28px;
+    }
+
+    .btn-apply-credit {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 13px 26px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: all .25s;
+        text-decoration: none;
+    }
+
+        .btn-apply-credit.primary {
+            background: #1f278a;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(31,39,138,.3);
+        }
+
+            .btn-apply-credit.primary:hover {
+                background: #171f6e;
+                transform: translateY(-1px);
+                box-shadow: 0 6px 18px rgba(31,39,138,.4);
+            }
+
+        .btn-apply-credit.secondary {
+            background: #fff;
+            color: #1f278a;
+            border: 2px solid #1f278a;
+        }
+
+            .btn-apply-credit.secondary:hover {
+                background: #f0f2ff;
+                transform: translateY(-1px);
+            }
+
+        .btn-apply-credit svg {
+            flex-shrink: 0;
+        }
+
+    /* ── Modal ── */
+    .ci-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.45);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+        .ci-modal-overlay.open {
+            display: flex;
+        }
+
+    .ci-modal {
+        background: #fff;
+        border-radius: 18px;
+        padding: 36px;
+        width: 100%;
+        max-width: 480px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        animation: modalIn .25s ease;
+    }
+    @@keyframes modalIn {
+        from
+
+    {
+        opacity: 0;
+        transform: scale(.95) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+    }
+
+    .ci-modal-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 6px;
+    }
+
+    .ci-modal-sub {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 24px;
+        line-height: 1.6;
+    }
+
+    .ci-form-group {
+        margin-bottom: 18px;
+    }
+
+        .ci-form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        .ci-form-group input,
+        .ci-form-group textarea,
+        .ci-form-group select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1a1a2e;
+            background: #f8fafc;
+            transition: border-color .2s;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+            .ci-form-group input:focus,
+            .ci-form-group textarea:focus,
+            .ci-form-group select:focus {
+                outline: none;
+                border-color: #1f278a;
+                background: #fff;
+            }
+
+        .ci-form-group textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+    .ci-modal-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+    .ci-btn-submit {
+        flex: 1;
+        padding: 13px;
+        background: #1f278a;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .2s;
+    }
+
+        .ci-btn-submit:hover {
+            background: #171f6e;
+        }
+
+        .ci-btn-submit:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+    .ci-btn-cancel {
+        padding: 13px 20px;
+        background: #f0f0f0;
+        color: #555;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .2s;
+    }
+
+        .ci-btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+    /* Toast */
+    .ci-toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        padding: 14px 22px;
+        border-radius: 12px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        z-index: 99999;
+        transform: translateY(80px);
+        opacity: 0;
+        transition: all .35s cubic-bezier(.4,0,.2,1);
+        box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    }
+
+        .ci-toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .ci-toast.success {
+            background: #4CAF50;
+        }
+
+        .ci-toast.error {
+            background: #e53935;
+        }
+
+    /* ERP row */
+    .erp-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 14px;
+        margin-bottom: 28px;
+    }
+
+    .erp-item {
+        background: #f7f9fc;
+        border: 1px solid #edf0f7;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+
+    .erp-item-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #999;
+        margin-bottom: 6px;
+    }
+
+    .erp-item-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+
+        .erp-item-value.danger {
+            color: #e53935;
+        }
+
+        .erp-item-value.ok {
+            color: #4CAF50;
+        }
+
+    /* Tabs */
+    .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 22px;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 14px;
+    }
+
+    .tab-btn {
+        padding: 10px 22px;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        background: #f0f0f0;
+        color: #555;
+        transition: .25s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .tab-btn.active {
+            background: #1f278a;
+            color: #fff;
+        }
+
+    .tab-count {
+        min-width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(0,0,0,.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .tab-btn.active .tab-count {
+        background: rgba(255,255,255,.25);
+        color: #fff;
+    }
+
+    .invoice-list {
+        display: none;
+    }
+
+        .invoice-list.active {
+            display: block;
+        }
+
+    .invoice-card {
+        border: 1px solid #eee;
+        border-radius: 14px;
+        padding: 18px 22px;
+        margin-bottom: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        transition: box-shadow .2s;
+    }
+
+        .invoice-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,.07);
+        }
+
+    .inv-num {
+        font-size: 17px;
+        font-weight: 700;
+        color: #222;
+        margin-bottom: 6px;
+    }
+
+    .inv-meta {
+        color: #777;
+        font-size: 13px;
+        margin-bottom: 3px;
+    }
+
+    .status-pill {
+        border: none;
+        padding: 10px 22px;
+        border-radius: 50px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 13px;
+        white-space: nowrap;
+        cursor: default;
+    }
+
+    .pill-paid {
+        background: #4CAF50;
+    }
+
+    .pill-unpaid {
+        background: #e53935;
+    }
+
+    .pill-expired {
+        background: #FF9800;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: #bbb;
+        font-size: 15px;
+    }
+
+        .empty-state svg {
+            display: block;
+            margin: 0 auto 14px;
+            opacity: .3;
+        }
+
+    @@media (max-width: 640px) {
+        .ci-wrap {
+            padding: 20px;
+        }
+
+        .invoice-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .status-pill {
+            width: 100%;
+            text-align: center;
+        }
+
+        .cc-value {
+            font-size: 20px;
+        }
+
+        .cc-top {
+            flex-direction: column;
+        }
+
+        .credit-actions {
+            flex-direction: column;
+        }
+
+        .btn-apply-credit {
+            justify-content: center;
+        }
+
+        .ci-modal {
+            padding: 24px;
+        }
+    }
+</style>
+
+<div class="ci-wrap">
+
+    <h1 class="ci-title">My Invoices & Credit</h1>
+    <p class="ci-desc">
+        Would you like to increase your credit limit?
+        Contact the sales department. Your request will be reviewed based on external credit checks.
+    </p>
+      @if (hasCredit)
+    {
+        <div class="credit-card">
+            <div class="cc-top">
+            <div>
+                <div class="cc-label">Available Credit</div>
+                <div class="cc-value">@Model.AvailableCredit.ToString("N2")</div>
+            </div>
+            <div>
+                <div class="cc-label">Credit Limit</div>
+                <div class="cc-value">@creditLimit.ToString("N2")</div>
+            </div>
+            <div>
+                <div class="cc-label">Status</div>
+                <span class="cc-badge @(hasCredit ? "active" : "inactive")">
+                    @(hasCredit ? "✓ Credit Active" : "✗ No Credit")
+                </span>
+            </div>
+        </div>
+        <div class="cc-bar-track">
+            <div class="cc-bar-fill" id="ccBar"
+                 data-target="@usedPct.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
+                 data-color="@barColor">
+            </div>
+        </div>
+        <div class="cc-bar-labels">
+            <span>Used: @usedAmount.ToString("N2")</span>
+            <span>@usedPct.ToString("F0")% used</span>
+            <span>Limit: @creditLimit.ToString("N2")</span>
+        </div>
+    </div>
+    }
+    @* ── Credit Action Buttons ── *@
+    <div class="credit-actions">
+        @if (!hasCredit)
+        {
+            <button class="btn-apply-credit primary" onclick="openModal('apply')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M12 5v14M5 12h14" />
+                </svg>
+                Apply for Credit
+            </button>
+        }
+         @if (hasCredit)
+        {
+            <button class="btn-apply-credit secondary" onclick="openModal('additional')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            Request Additional Credit
+        </button>
+        }
+    </div>
+      @if (hasCredit)
+        {
+    <div class="erp-row">
+        <div class="erp-item">
+            <div class="erp-item-label">Payment Terms</div>
+            <div class="erp-item-value">@(string.IsNullOrEmpty(Model.PaymentTerms) ? "—" : Model.PaymentTerms)</div>
+        </div>
+        <div class="erp-item">
+            <div class="erp-item-label">Outstanding Balance</div>
+            <div class="erp-item-value @(Model.Balance > 0 ? "danger" : "ok")">@Model.Balance.ToString("N2")</div>
+        </div>
+        <div class="erp-item">
+            <div class="erp-item-label">Overdue Balance</div>
+            <div class="erp-item-value @(Model.OverdueBalance > 0 ? "danger" : "ok")">
+                @Model.OverdueBalance.ToString("N2")
+                @if (Model.OverdueBalance > 0)
+                {
+                    <span style="font-size:11px"> ⚠</span>
+                }
+            </div>
+        </div>
+        <div class="erp-item">
+            <div class="erp-item-label">Days Overdue</div>
+            <div class="erp-item-value @(Model.DaysOverdue > 0 ? "danger" : "ok")">
+                @Model.DaysOverdue day@(Model.DaysOverdue == 1 ? "" : "s")
+            </div>
+        </div>
+    </div>
+    }
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('unpaid', this)">
+            Open Invoices <span class="tab-count">@openCount</span>
+        </button>
+        <button class="tab-btn" onclick="showTab('paid', this)">
+            Completed Invoices <span class="tab-count">@completedCount</span>
+        </button>
+    </div>
+
+    <div class="invoice-list active" id="unpaid">
+        @if (!Model.OpenInvoices.Any())
+        {
+            <div class="empty-state">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                No open invoices
+            </div>
+        }
+        else
+        {
+            foreach (var inv in Model.OpenInvoices)
+            {
+                var pillClass = inv.Status == "Expired" ? "pill-expired" : "pill-unpaid";
+                <div class="invoice-card">
+                    <div>
+                        <div class="inv-num">Invoice #@inv.InvoiceNumber</div>
+                        <div class="inv-meta">Outstanding amount: @inv.Amount.ToString("N2")</div>
+                        <div class="inv-meta">Invoice Date: @inv.InvoiceDate.ToString("dd MMMM yyyy")</div>
+                    </div>
+                    <button class="status-pill @pillClass">@inv.Status</button>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="invoice-list" id="paid">
+        @if (!Model.CompletedInvoices.Any())
+        {
+            <div class="empty-state">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                No completed invoices yet
+            </div>
+        }
+        else
+        {
+            foreach (var inv in Model.CompletedInvoices)
+            {
+                <div class="invoice-card">
+                    <div>
+                        <div class="inv-num">Invoice #@inv.InvoiceNumber</div>
+                        <div class="inv-meta">Paid amount: @inv.Amount.ToString("N2")</div>
+                        <div class="inv-meta">Invoice Date: @inv.InvoiceDate.ToString("dd MMMM yyyy")</div>
+                    </div>
+                    <button class="status-pill pill-paid">Paid ✓</button>
+                </div>
+            }
+        }
+    </div>
+
+</div>
+
+
+<div class="ci-modal-overlay" id="modal-apply">
+    <div class="ci-modal">
+        <div class="ci-modal-title">Apply for Credit</div>
+        <div class="ci-modal-sub">
+            Fill in the details below. Our team will review your application and contact you within 2 business days.
+        </div>
+        <div class="ci-form-group">
+            <label>Requested Credit Limit</label>
+            <input type="number" id="apply-amount" placeholder="10000" min="1" />
+        </div>
+        <div class="ci-form-group">
+            <label>Business Reason</label>
+            <textarea id="apply-reason" placeholder="Briefly describe why you need credit..."></textarea>
+        </div>
+        <div class="ci-modal-actions">
+            <button class="ci-btn-cancel" onclick="closeModal('apply')">Cancel</button>
+            <button class="ci-btn-submit" id="btn-apply-submit" onclick="submitRequest('apply')">
+                Send Request
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<div class="ci-modal-overlay" id="modal-additional">
+    <div class="ci-modal">
+        <div class="ci-modal-title">Request Additional Credit</div>
+        <div class="ci-modal-sub">
+            Your current limit is <strong>@creditLimit.ToString("N2")</strong>.
+            Tell us how much additional credit you need and why.
+        </div>
+        <div class="ci-form-group">
+            <label>Additional Amount Requested</label>
+            <input type="number" id="additional-amount" placeholder="5000" min="1" />
+        </div>
+        <div class="ci-form-group">
+            <label>Reason for Increase</label>
+            <textarea id="additional-reason" placeholder="Explain your business need for the increase..."></textarea>
+        </div>
+        <div class="ci-modal-actions">
+            <button class="ci-btn-cancel" onclick="closeModal('additional')">Cancel</button>
+            <button class="ci-btn-submit" id="btn-additional-submit" onclick="submitRequest('additional')">
+                Send Request
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<div class="ci-toast" id="ci-toast"></div>
+
+<script>
+   
+    (function () {
+        function initBar() {
+            var bar = document.getElementById('ccBar');
+            if (!bar) return;
+            var target = parseFloat(bar.getAttribute('data-target')) || 0;
+            var color  = bar.getAttribute('data-color') || '#4CAF50';
+            bar.style.background = color;
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    bar.style.width = Math.min(Math.max(target, 0), 100) + '%';
+                });
+            });
+        }
+        document.readyState === 'loading'
+            ? document.addEventListener('DOMContentLoaded', initBar)
+            : initBar();
+    })();
+
+   
+    function showTab(tabId, btn) {
+        document.querySelectorAll('.invoice-list').forEach(function (el) { el.classList.remove('active'); });
+        document.querySelectorAll('.tab-btn').forEach(function (el) { el.classList.remove('active'); });
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+  
+    function openModal(type) {
+        document.getElementById('modal-' + type).classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal(type) {
+        document.getElementById('modal-' + type).classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    // Close on overlay click
+    document.querySelectorAll('.ci-modal-overlay').forEach(function (overlay) {
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) {
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+
+   
+    function showToast(msg, type) {
+        var t = document.getElementById('ci-toast');
+        t.textContent = msg;
+        t.className   = 'ci-toast ' + (type || 'success');
+        t.classList.add('show');
+        setTimeout(function () { t.classList.remove('show'); }, 4000);
+    }
+
+   
+    function submitRequest(type) {
+        var isApply      = type === 'apply';
+        var amountInput  = document.getElementById(type + '-amount');
+        var reasonInput  = document.getElementById(type + '-reason');
+        var submitBtn    = document.getElementById('btn-' + type + '-submit');
+
+        var amount = amountInput.value.trim();
+        var reason = reasonInput.value.trim();
+
+        if (!amount || amount <= 0) {
+            showToast('Please enter a valid amount.', 'error');
+            return;
+        }
+        if (!reason) {
+            showToast('Please provide a reason.', 'error');
+            return;
+        }
+
+        submitBtn.disabled    = true;
+        submitBtn.textContent = 'Sending...';
+
+        fetch('/Home/SendCreditRequest', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                requestType: isApply ? 'Apply for Credit' : 'Request Additional Credit',
+                amount:      parseFloat(amount),
+                reason:      reason
+            })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.success) {
+                closeModal(type);
+                showToast('✓ Request sent successfully! We will contact you soon.', 'success');
+                amountInput.value = '';
+                reasonInput.value = '';
+            } else {
+                showToast('Failed to send request. Please try again.', 'error');
+            }
+        })
+        .catch(function () {
+            showToast('Network error. Please try again.', 'error');
+        })
+        .finally(function () {
+            submitBtn.disabled    = false;
+            submitBtn.textContent = 'Send Request';
+        });
+    }
+</script>

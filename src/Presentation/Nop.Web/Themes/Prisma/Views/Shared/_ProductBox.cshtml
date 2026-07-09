@@ -1,0 +1,2013 @@
+﻿@model ProductOverviewModel
+
+@using Nop.Core
+@using Nop.Core.Domain.Catalog
+@using Nop.Core.Domain.Orders
+@using Nop.Core.Domain.Tax
+@using Nop.Services.Configuration
+@using System;
+@using System.Globalization;
+@using System.Text.RegularExpressions;
+@inject Nop.Services.Catalog.IProductService ProductService
+@inject CatalogSettings catalogSettings
+@inject IStoreContext storeContext
+@inject IWorkContext workContext
+@inject ISettingService settingService
+@inject IViewComponentSelector viewComponentSelector
+@using Nop.Core.Domain.Catalog
+@inject Nop.Services.Catalog.ICategoryService CategoryService
+@inject Nop.Services.Seo.IUrlRecordService UrlRecordService
+@inject Nop.Services.Catalog.IManufacturerService ManufacturerService
+@inject Nop.Services.Localization.ILocalizationService LocalizationService
+
+
+@{
+    //prepare "Add to cart" AJAX link
+    var addtocartlink = "";
+    var shoppingCartTypeId = (int)ShoppingCartType.ShoppingCart;
+    var quantity = 1;
+    if (Model.ProductPrice.ForceRedirectionAfterAddingToCart)
+    {
+        addtocartlink = Url.RouteUrl("AddProductToCart-Catalog", new { productId = Model.Id, shoppingCartTypeId = shoppingCartTypeId, quantity = quantity, forceredirection = Model.ProductPrice.ForceRedirectionAfterAddingToCart });
+    }
+    else
+    {
+        addtocartlink = Url.RouteUrl("AddProductToCart-Catalog", new { productId = Model.Id, shoppingCartTypeId = shoppingCartTypeId, quantity = quantity });
+    }
+
+    var addtowishlistlink = Url.RouteUrl("AddProductToCart-Catalog", new { productId = Model.Id, shoppingCartTypeId = (int)ShoppingCartType.Wishlist, quantity = quantity });
+    var addtocomparelink = Url.RouteUrl("AddProductToCompare", new { productId = Model.Id });
+
+    var storeId = (await storeContext.GetCurrentStoreAsync()).Id;
+    var lazyLoadImages = await settingService.GetSettingByKeyAsync("PrismaThemeSettings.LazyLoadImages", false, storeId, true);
+
+    var product = await ProductService.GetProductByIdAsync(Model.Id);
+
+    var StockQuantity = await ProductService.GetTotalStockQuantityAsync(product);
+    var CurrentCustomer = await workContext.GetCurrentCustomerAsync();
+    var mappings = await CategoryService.GetProductCategoriesByProductIdAsync(product.Id, true);
+    var firstMapping = mappings?.OrderBy(pc => pc.DisplayOrder).FirstOrDefault();
+
+    Nop.Core.Domain.Catalog.Category category = null;
+    string categoryName = "";
+    string categorySeName = "";
+
+    if (firstMapping != null)
+    {
+        category = await CategoryService.GetCategoryByIdAsync(firstMapping.CategoryId);
+
+        if (category != null)
+        {
+            var workingLanguage = await workContext.GetWorkingLanguageAsync();
+
+            categoryName = await LocalizationService.GetLocalizedAsync(category, x => x.Name, workingLanguage.Id);
+            categorySeName = await UrlRecordService.GetSeNameAsync(category, workingLanguage.Id);
+
+            if (string.IsNullOrWhiteSpace(categoryName))
+                categoryName = category.Name;
+        }
+    }
+
+    var brandMappings = await ManufacturerService.GetProductManufacturersByProductIdAsync(product.Id, true);
+    var firstBrandMapping = brandMappings?.OrderBy(pm => pm.DisplayOrder).FirstOrDefault();
+
+    string brandName = ""; // Default fallback
+
+    if (firstBrandMapping != null)
+    {
+        var brand = await ManufacturerService.GetManufacturerByIdAsync(firstBrandMapping.ManufacturerId);
+        if (!string.IsNullOrEmpty(brand?.Name))
+        {
+            brandName = brand.Name;
+        }
+    }
+
+   
+    var isSubstituteResult =
+        Model.CustomProperties != null
+        && Model.CustomProperties.TryGetValue("IsSubstituteResult", out var subFlag)
+        && string.Equals(subFlag, "true", StringComparison.OrdinalIgnoreCase);
+
+    var substituteText = T("Substitute").Text;
+
+
+
+    var priceText = Model.ProductPrice.Price ?? "";
+    decimal parsedPrice = 0;
+
+    if (!string.IsNullOrWhiteSpace(priceText))
+    {
+        if (!decimal.TryParse(priceText, NumberStyles.Currency, CultureInfo.GetCultureInfo("en-US"), out parsedPrice))
+        {
+            var cleaned = Regex.Replace(priceText, @"[^\d.-]", "");
+            if (!decimal.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out parsedPrice))
+            {
+                parsedPrice = 0; 
+            }
+        }
+    }
+
+    var isZeroPrice = parsedPrice == 0;
+
+
+}
+<style>
+    .product-list .add-info {
+        display: flex;
+        justify-content: center;
+        align-content: center;
+        align-items: center;
+    }
+
+    .product-list .item-box .product-rating-box {
+        display: none
+    }
+
+    .product-list .in.stock.out-of-stock.blockinstock {
+        display: block !important
+    }
+
+    .product-list .item-box {
+        padding: 4px;
+    }
+
+    .product-list .add-info {
+        display: flex;
+        justify-content: center;
+        align-content: center;
+        align-items: center;
+    }
+
+    .outo {
+        padding: 6px 0px;
+        font-weight: bold;
+    }
+
+    .product-list .outo.listblock {
+        display: block !important
+    }
+
+    .description.gram.stock {
+        padding-top: 0 !important;
+        margin-right: 0;
+    }
+
+    .prices {
+        border-right: 0 !important;
+    }
+
+    body.home-page-body .outo {
+        display: block !important;
+    }
+
+        body.home-page-body .outo.listblock {
+            display: none !important
+        }
+
+    .blockstok {
+        color: green;
+    }
+
+    .description {
+        min-width: 50px;
+        align-content: center;
+    }
+
+    .product-list .item-box .description.gram {
+        FONT-SIZE: 16PX;
+        FONT-WEIGHT: BOLD;
+        color: #444 !important;
+        display: flex;
+        padding-top: 15px;
+        justify-content: space-around;
+        min-width: 100px;
+    }
+
+    .product-list .prices * {
+        color: #4ab2f1 !important;
+    }
+
+    .CAT {
+        display: none;
+    }
+
+    .product-list .CAT {
+        COLOR: #444 !IMPORTANT;
+        padding-top: 12px;
+        display: block;
+    }
+
+    .product-list .item-box .prices * {
+        FONT-SIZE: 16PX !important;
+    }
+
+    .product-list .item-box .prices {
+        FONT-SIZE: 16PX;
+        display: flex;
+        /*    align-content: center;
+            align-items: center;
+            justify-content: center;*/
+    }
+
+    .product-list .item-box .picture {
+        display: none !important
+    }
+
+    .product-list .item-box .prices {
+        FONT-SIZE: 16PX;
+        display: flex;
+        align-items: center;
+        padding-top: 11px;
+    }
+
+    .product-list .product-titleall {
+        width:33%;
+        display: grid;
+        align-items: center;
+    }
+    .search-page .product-list .product-titleall {
+        width:32%;
+        display: grid;
+        align-items: center;
+    }
+    .product-list .CAT {
+        padding-top: 0;
+    }
+
+    .product-list h2.product-title {
+        width: 100%;
+        margin: 0 !important;
+    }
+
+    .product-list p.product-titlecat {
+        width: 100%;
+        FONT-SIZE: 16PX;
+        FONT-WEIGHT: BOLD;
+        color: #444 !important;
+    }
+
+    .HEADR {
+        BACKGROUND-COLOR: #1f278a;
+        display: flex;
+        align-content: center;
+        justify-content: center;
+        align-items: center;
+        border-radius: 4px;
+    }
+
+    body .HEADR div * {
+        BACKGROUND-COLOR: #1f278a;
+        color: white !important;
+        margin: 0 !important;
+        padding: 10px;
+        font-weight: bold;
+        border-radius: 4px;
+    }
+
+
+    body .HEADR div .description.gram.BRAND, body .HEADR div .description.gram, body .HEADR div .description.gram.stock {
+        BACKGROUND-COLOR: #1f278a;
+        color: white !important;
+        margin: 0 !important;
+        padding: 0
+    }
+
+    .HEADR .add-info {
+        padding: 0 !important
+    }
+
+    .HEADR .add-Logined {
+        display: none;
+    }
+
+    .HEADR .details {
+        background: #1f278a !important;
+        padding-top: 0 !important;
+        border-radius: 4px;
+    }
+
+    .add-info {
+        z-index: 100000;
+        position: relative;
+    }
+
+    .product-list .item-box .prices {
+        z-index: 0;
+    }
+
+
+    .product-grid .HEADR {
+        display: none
+    }
+
+    .HEADR {
+        display: none;
+    }
+
+    .product-list .item-box:first-child .HEADR {
+        display: block;
+    }
+
+    .detnew .description.gram.BRAND {
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+    .detnew .description.gram {
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+        .detnew .description.gram.stock {
+            margin-right: 0;
+            margin-left: 0;
+        }
+
+    .detnew .description.gram {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    .detnew .prices {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    .HEADR .description.gram.stock {
+        MIN-WIDTH: 120PX !important;
+    }
+    .search-page .HEADR .description.gram.stock {
+        MIN-WIDTH: 120PX !important;
+    }
+    html[lang="ar"] .HEADR .prices {
+        border: 0 !important;
+    }
+
+    @@media (max-width:1200px) {
+        .HEADR {
+            display: none !important;
+        }
+    }
+
+    @@media (min-width:1200px) {
+        .product-list .outofstok {
+            font-size: 11px;
+        }
+
+        .product-list .detnew .description.gram.stock {
+            width: 120px;
+        }
+        .search-page .product-list .detnew .description.gram.stock {
+            width: 120px;
+        }
+    }
+    /*   .buttons.but3 {
+            display: none;
+        }
+    */
+    .quick-view-button {
+        display: none;
+    }
+
+    .product-list .item-box .buttons {
+        width: fit-content !important;
+    }
+
+    .product-list .buttons.but1 * {
+        display: inline-block
+    }
+
+    .product-list button.button-2.product-box-add-to-cart-button {
+        width: 40px !important;
+        min-width: 40px !IMPORTANT;
+    }
+
+    .product-list .ajax-cart-button-wrapper {
+        border: 1px solid #d8d8d8;
+    }
+
+    .product-list input.productQuantityTextBox {
+        height: 38px !important;
+    }
+
+    .product-grid .buttons.but1 * {
+        display: inline-block
+    }
+
+
+
+    .product-grid .ajax-cart-button-wrapper {
+        border: 1px solid #d8d8d8;
+    }
+
+    .product-grid input.productQuantityTextBox {
+        height: 38px !important;
+    }
+
+    .product-grid input.productQuantityTextBox {
+        width: 50% !important;
+        padding-top: 8px !important;
+        margin-top: 0 !important;
+    }
+
+    .product-grid .add-info {
+        background-color: #F3F3F3;
+        display: flex;
+        justify-content: center;
+        align-content: center;
+        align-items: center;
+    }
+    /*----------------------*/
+
+
+    .blockstok {
+        color: #444 !important;
+    }
+
+    .product-list .HEADR .description.gram {
+        color: #fff !important;
+    }
+
+    .product-list .HEADR .prices * {
+        color: #fff !important;
+    }
+
+    .product-grid .add-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #F3F3F3 !important;
+        padding: 5px;
+        border-radius: 6px;
+        margin-top: 10px;
+    }
+
+    .product-list .ajax-cart-button-wrapper {
+        border: 0;
+    }
+
+    .product-grid .add-info .quote-add.home {
+        background-color: #F3F3F3;
+    }
+
+    .product-grid .add-info .buttons,
+    .product-grid .add-info .quote-add {
+        display: flex;
+        align-items: center;
+    }
+
+    .product-grid .ajax-cart-button-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* حقل الكمية */
+    .product-grid .productQuantityTextBox {
+        width: 45px;
+        height: 40px;
+        text-align: center;
+        border: 0px solid #ccc !important;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+
+    /* زر إضافة للسلة */
+    .product-grid .product-box-add-to-cart-button {
+        background: #1a73e8 !important;
+        color: #fff !important;
+        border: none;
+        padding: 10px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+
+        .product-grid .product-box-add-to-cart-button:hover {
+            background: #0a5ac2 !important;
+        }
+
+    /* زر عرض السعر */
+    .product-grid .quote-add-btn {
+        background: #444 !important;
+        color: #fff !important;
+        border: none;
+        padding: 10px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+
+        .product-grid .quote-add-btn:hover {
+            background: #222 !important;
+        }
+
+    /* أيقونات */
+    .product-grid .add-info i {
+        font-size: 20px;
+        color: #444 !important;
+    }
+
+
+    .add-info .buttons.but1 {
+        background-color: #F3F3F3 !important;
+    }
+    /*.product-grid .add-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;*/ /* يوزع العناصر لو عنصر اختفى */
+    /*gap: 10px;
+        }
+
+            .product-grid .add-info .buttons,
+            .product-grid .add-info .quote-add {
+                flex: 1;*/ /* كل واحد ياخد نفس العرض */
+    /*}
+
+            .product-grid .add-info .ajax-cart-button-wrapper {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }*/
+    body .product-list input.productQuantityTextBox {
+        height: 31px !important;
+        margin-left: 3px;
+        margin-top: 4px;
+    }
+
+    .price-zero  {
+        opacity: 0.3;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    .price-zero *{
+        opacity:1 !important;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+</style>
+<style>
+    .product-grid button.button-2.product-box-add-to-cart-button {
+        background: url(/Themes/Prisma/Content/img/cart.png) no-repeat 90% !important;
+        background-color: #1f278a !important;
+        font-size: 10px !important;
+        color: #fff !important;
+        padding: 9px !important;
+        padding-right: 26px !important;
+        padding-left: 3px !important;
+        width: 67% !important;
+        border-radius: 6px !important;
+        max-height: fit-content;
+    }
+
+    html[dir="ltr"] .product-grid button.button-2.product-box-add-to-cart-button {
+        background: url(/Themes/Prisma/Content/img/cart.png) no-repeat 8% !important;
+        background-color: #1f278a !important;
+        font-size: 10px !important;
+        color: #fff !important;
+        padding: 9px !important;
+        padding-left: 12px !important;
+        padding-right: 3px !important;
+        width: 66% !important;
+        border-radius: 6px !important;
+        max-height: fit-content;
+    }
+
+
+    .product-grid button.add-to-qcart.button-2.quote-add-btn.product-box-add-to-qcart-button {
+        background-color: #f9a01b !important;
+        border-radius: 6px;
+    }
+
+
+    .product-grid .add-info {
+        display: block !important;
+    }
+
+    .product-grid .buttons.but1 {
+        width: 77% !IMPORTANT;
+    }
+
+    .product-grid .ajax-cart-button-wrapper {
+        width: 96% !important;
+        float: left;
+    }
+
+    .product-grid button.button-2.product-box-add-to-cart-button {
+        width: 66% !important;
+        float: right;
+        min-width: auto;
+    }
+
+    .product-grid .buttons.but1 {
+        display: block !important;
+    }
+
+    .product-grid input.productQuantityTextBox {
+        width: 31% !important;
+        padding-top: 8px !important;
+        margin-top: 0 !important;
+        min-width: auto !important;
+        float: left;
+    }
+
+    .product-grid .ajax-cart-button-wrapper {
+        border: 0;
+        background-color: #f3f3f3 !important;
+    }
+
+
+    .item-box .picture img {
+        border: 0 !important;
+    }
+
+    body.home-page-body.font-comfortaa.item-type-1 .item-box .picture {
+        border-top: 0;
+    }
+
+    .product-grid .add-info.outlogin {
+        display: flex !important;
+        align-content: center;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .product-grid .outlogin .buttons.but1 {
+        width: 75% !IMPORTANT;
+    }
+
+    .outlogin .ajax-cart-button-wrapper {
+        width: 100% !important;
+    }
+
+    html[dir="ltr"] .product-grid .outlogin button.button-2.product-box-add-to-cart-button {
+        width: 100% !important;
+    }
+
+    html[dir="rtl"] .product-grid .outlogin button.button-2.product-box-add-to-cart-button {
+        width: 100% !important;
+    }
+
+    .ajax-cart-button-wrapper.qty-enabled {
+        border: 0;
+    }
+
+    .product-grid .add-info {
+        margin-top: 0;
+    }
+
+    @@media (max-width: 1024px) {
+
+        html[dir="ltr"] .product-grid .outlogin button.button-2.product-box-add-to-cart-button {
+            width: 100% !important
+        }
+
+        html[dir="ltr"] .product-grid .outlogin .buttons.but1 {
+            width: 73% !IMPORTANT;
+            margin-right: 2%;
+        }
+
+        .home-page-body .spc-body .product-grid .item-grid {
+            padding: 0 !important;
+        }
+    }
+</style>
+<style>
+    @@media (min-width: 1024px) {
+        html[dir="rtl"] body .product-grid .buttons.but1 {
+            width: 60% !IMPORTANT;
+            margin-left: 3%;
+            margin-right: 0 !important;
+        }
+
+        html[dir="rtl"] body .quote-add.home {
+            width: 37% !important;
+            min-width: auto !important;
+            position: relative;
+            top: -3px;
+        }
+
+        html[dir="rtl"] body .add-to-qcart.button-2.quote-add-btn {
+            background: url(/Themes/Prisma/Content/img/Quote.png) no-repeat no-repeat 90% !important;
+            font-size: 10px;
+            color: #000 !Important;
+            padding-right: 26px !important;
+        }
+
+        html[dir="ltr"] body .product-grid .buttons.but1 {
+            width: 60% !IMPORTANT;
+            margin-left: 3%;
+            margin-right: 0 !IMPORTANT;
+        }
+
+        html[dir="ltr"] body .quote-add.home {
+            width: 37% !important;
+            min-width: auto !important;
+            position: relative;
+            top: -3px;
+        }
+
+        html[dir="ltr"] body .add-to-qcart.button-2.quote-add-btn {
+            background: url(/Themes/Prisma/Content/img/Quote.png) no-repeat no-repeat 9% !important;
+            font-size: 10px !important;
+            color: #000 !Important;
+            padding-left: 26px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .home-page-body .add-info.outlogin .buttons.but1 {
+            width: 50% !important
+        }
+
+        .home-page-body .add-info.outlogin .quote-add.home {
+            width: 50% !important
+        }
+
+        .product-grid button.add-to-qcart.button-2.quote-add-btn.product-box-add-to-qcart-button {
+            display: flex;
+            align-content: center;
+            justify-content: center;
+            align-items: center;
+        }
+
+        html body .product-list .add-to-qcart.button-2.quote-add-btn {
+            font-size: 0 !important;
+            padding: 20px !important;
+            background-position: center !important;
+        }
+
+        html body .product-list .quote-add.home {
+            width: auto !important;
+            background-color: #f3f3f3;
+        }
+
+        .product-list.nop7SpikesAjaxFiltersGrid.ajaxBusyPanelParent {
+        }
+    }
+
+
+    @@media (max-width: 1024px) {
+        .add-info .quote-add.home {
+            background-color: #d8d8d8 !important;
+        }
+
+        .add-info .buttons.but1 {
+            width: 48% !important;
+        }
+
+        .add-info .quote-add.home {
+            min-width: 48% !important;
+        }
+
+        body .add-to-qcart.button-2.quote-add-btn {
+            font-size: 10px;
+        }
+
+        html[dir="ltr"] body .add-to-qcart.button-2.quote-add-btn {
+            background: url(/Themes/Prisma/Content/img/Quote.png) no-repeat no-repeat 9% !important;
+            font-size: 10px;
+            color: #000 !Important;
+            padding-left: 26px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        html[dir="rtl"] body .add-to-qcart.button-2.quote-add-btn {
+            background: url(/Themes/Prisma/Content/img/Quote.png) no-repeat no-repeat 90% !important;
+            font-size: 10px;
+            color: #000 !Important;
+            padding-right: 26px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+        button.button-2.product-box-add-to-cart-button {
+            font-size: 10px !important;
+            font-weight: bold !important;
+        }
+
+        .buttons.but1 input {
+            width: 100%;
+        }
+
+        html[dir="ltr"] .product-list button.button-2.product-box-add-to-cart-button {
+            background: url(/Themes/Prisma/Content/img/cart.png) #d8d8d8 no-repeat 4% !important;
+            font-size: 10px !important;
+            color: black !important;
+            width: 100% !important;
+            min-width: 40px !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        html[dir="rtl"] .product-list button.button-2.product-box-add-to-cart-button {
+            background: url(/Themes/Prisma/Content/img/cart.png) #d8d8d8 no-repeat 90% !important;
+            font-size: 10px !important;
+            color: black !important;
+            width: 100% !important;
+            min-width: 40px !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        html[dir="rtl"] .product-grid .buttons.but1 {
+            width: 47% !IMPORTANT;
+            margin-right: 3%;
+        }
+    }
+    /* الكارد أبيض + شادو (الهوم بيج فقط) */
+    .product-grid .item-box {
+        background: #fff !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        border-radius: 10px;
+        padding: 10px;
+        transition: 0.3s ease;
+        margin-bottom: 12px !important;
+    }
+
+        /* تأثير عند الهوفر */
+        .product-grid .item-box:hover {
+            box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+            transform: translateY(-3px);
+        }
+
+    @@media (min-width: 992px) {
+        /* إخفاء الأزرار افتراضيًا */
+        .home-page-body .product-grid .item-box .add-info,
+        .home-page-body .product-grid .item-box .buttons,
+        .home-page-body .product-grid .item-box .quote-add {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            display: inline-block !important;
+        }
+        /* إظهار الأزرار وقت الهوفر على نفس الكارد */
+        .home-page-body .product-grid .item-box:hover .add-info,
+        .home-page-body .product-grid .item-box:hover .buttons,
+        .home-page-body .product-grid .item-box:hover .quote-add {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            display: inline-block !important;
+        }
+    }
+
+    .html-home-page .prices {
+        margin-bottom: 10px;
+        float: left;
+        width: 100%;
+    }
+
+    body.home-page-body.font-comfortaa.item-type-1 .add-Logined .prices {
+        display: block !important;
+        height: fit-content !important;
+        min-height: 18px;
+    }
+
+    @@media (min-width: 1024px) {
+        .home-page-body .add-info.outlogin .quote-add.home {
+            width: 47% !important;
+        }
+    }
+</style>
+
+<style>
+    .product-list .item-box .prices {
+        display: inline-flex !important;
+    }
+
+    .product-list .item-box .add-Logined {
+        display: none;
+    }
+
+    .buttons.but3.widha {
+        position: absolute;
+        right: 0;
+        top: 10px;
+        z-index: 10000;
+    }
+
+    button.button-2.add-to-wishlist-button {
+        background-color: transparent !important;
+    }
+
+    @@media all and (max-width: 1200px) {
+        body .product-list button.button-2.product-box-add-to-cart-button {
+            font-size: 0 !important;
+        }
+
+        .add-info {
+            padding: 0px 14px;
+            padding-right: 10px;
+        }
+
+        button.button-2.product-box-add-to-cart-button {
+        }
+
+        .add-info {
+            /* background-color: #ac6e13; */
+        }
+
+        body .add-info .buttons.but3.wich {
+            padding: 0 !important;
+        }
+
+        .item-box .add-to-wishlist-button:after {
+            width: 50px;
+        }
+
+        html[dir="ltr"] .product-list button.button-2.product-box-add-to-cart-button {
+            font-size: 0 !important;
+            display: block !important;
+        }
+
+        html[dir="ltr"] .product-list button.button-2.product-box-add-to-cart-button {
+            background: url(/Themes/Prisma/Content/img/cart.png) #151b5f no-repeat center !important;
+        }
+
+        html[dir="rtl"] .product-list button.button-2.product-box-add-to-cart-button {
+            font-size: 0 !important;
+            display: block !important;
+        }
+
+        html[dir="rtl"] .product-list button.button-2.product-box-add-to-cart-button {
+            background: url(/Themes/Prisma/Content/img/cart.png) #151b5f no-repeat center !important;
+        }
+    }
+    .OnRequest button.product-box-add-to-cart-button {
+        pointer-events: none;
+        opacity: .4;
+        cursor: not-allowed;
+        color: #666 !important;
+    }
+
+    .OnRequest input.productQuantityTextBox {
+        pointer-events: none;
+        opacity: .4;
+        cursor: not-allowed;
+        color: #666 !important;
+    }
+    .product-details-page-body .item-grid .item-box {
+        border-bottom: 1px solid #EDEEEF !important;
+    }
+    @@media (min-width:1200px) {
+        .product-list .item-box .details {
+            display: flex;
+            align-items: center;
+        }
+
+        .product-list .item-box .add-info {
+            margin-left: auto; /* يزقها لليمين */
+        }
+    }
+</style>
+<div class="HEADR">
+    <div class="picture" style="float:left;width:100%;display:block"><a href="/en/MC-28*38*8-TC-77429" title="Show details for 1726203-2RS"> <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-lazyloadsrc="https://rotat.com/images/thumbs/def/default-image_360.png" alt="Picture of 1726203-2RS" title="Show details for 1726203-2RS"> </a></div><div class="details">
+
+        <div class="product-titleall">
+            @T("Produt Name")
+        </div><div class="description gram BRAND" data-short-description="none" style="
+    padding-top: 0;
+">@T("Brand")</div>
+              <div class="description gram Weight" style="
+    padding-top: 0;
+">@T("Weight")@T("(kg)")</div>
+<div class="description gram stock">@T("stock")</div><div class="prices" style="
+
+"><span class="k">@T("price")</span></div>
+<div class="add-Logined"></div><div class="add-info" style="
+    visibility: hidden;
+"></div>
+</div>
+</div>
+<div class="product-item detnew" data-productid="@Model.Id">
+    @*<div class="outo" style="float:left;width:100%;display:none;">
+            @if (StockQuantity > 0)
+            {
+                <div class="in stock blockinstock" style="display: block; float: left; margin-top: 10px;">
+                    @T("متوفر في المخزون")
+                </div>
+            }
+            else
+            {
+                <div class="in stock out-of-stock blockinstock" style="display: block; float: left; margin-top: 10px; color: red;">
+                    @T("غير متوفر في المخزون")
+                </div>
+            }
+        </div>*@
+    <div class="picture" style="float:left;width:100%;display:block;">
+        <div class="buttons but3 widha" style="width: calc(-8.75% - 10px); height: 40px; box-sizing: border-box;">
+            <button type="button"
+                    value="Add to wishlist"
+                    title="Add to wishlist"
+                    class="button-2 add-to-wishlist-button"
+                    id="add-wishlist-modal-btn-7"
+                    tabindex="0"
+                    onclick="window.location.href='/login'">
+            </button>
+        </div>
+        @if (Model.PictureModels.Count > 1)
+        {
+            <div class="swiper" id="swiper-@Model.Id" dir="@Html.GetUIDirection(!await Html.ShouldUseRtlThemeAsync())">
+                <div class="swiper-wrapper">
+                    @foreach (var picture in Model.PictureModels)
+                    {
+                        <a class="swiper-slide" href="@(Url.RouteUrl<Product>(new { SeName = Model.SeName }))" title="@picture.Title">
+                            @if (viewComponentSelector.SelectComponent("LazyLoadImage") != null)
+                            {
+                                @await Component.InvokeAsync("LazyLoadImage", new (string Key, string Value)[]
+{
+                                    ("src", picture.ImageUrl),
+                                    ("alt", picture.AlternateText),
+                                    ("title", picture.Title)
+})
+                                                                                                                    }
+                            else
+                            {
+                                <img class="picture-img" alt="@picture.AlternateText" src="@picture.ImageUrl" title="@picture.Title" />
+                            }
+                        </a>
+                    }
+                </div>
+                <div class="swiper-pagination"></div>
+            </div>
+            <script asp-location="Footer">
+                new Swiper('#swiper-@(Model.Id)', {
+                    pagination: {
+                        clickable: true,
+                        el: '.swiper-pagination',
+                    },
+                });
+            </script>
+        }
+        else
+        {
+            var picture = Model.PictureModels.FirstOrDefault();
+            <a href="@(Url.RouteUrl<Product>(new { SeName = Model.SeName }))" title="@picture?.Title">
+                @if (viewComponentSelector.SelectComponent("LazyLoadImage") != null)
+                {
+                    @await Component.InvokeAsync("LazyLoadImage", new (string Key, string Value)[]
+{
+                        ("src", picture.ImageUrl),
+                        ("alt", picture.AlternateText),
+                        ("title", picture.Title)
+})
+                }
+                else
+                {
+                    <img class="picture-img" alt="@picture?.AlternateText" src="@picture?.ImageUrl" title="@picture?.Title" />
+                }
+            </a>
+        }
+    </div>
+    <div class="details">
+
+
+        @if (!string.IsNullOrEmpty(CurrentCustomer.Email) && !string.IsNullOrEmpty(CurrentCustomer.FirstName))
+        {
+            <div class="product-titleall">
+                <h2 class="product-title">
+                    <a href="@(Url.RouteUrl<Product>(new { SeName = Model.SeName }))">@Model.Name</a>
+                    @if (isSubstituteResult)
+                    {
+                        <span class="substitute-flag">(@substituteText)</span>
+                    }
+                </h2>
+                @if (!string.IsNullOrEmpty(categoryName))
+                {
+
+
+                    <p class="product-titlecat">
+                        <a href="@Url.RouteUrl("Category", new { SeName = categorySeName })" class="CAT">@categoryName</a>
+
+                    </p>
+                }
+            </div>
+            <div class="add-Logined">
+                <div class="prices" style="display:none">
+                    @if (!string.IsNullOrEmpty(Model.ProductPrice.OldPrice))
+                    {
+                        <span class="price old-price">@Model.ProductPrice.OldPrice</span>
+                    }
+                    <span class="price actual-price">@(isZeroPrice ? "On Request" : Model.ProductPrice.Price)</span>
+                    @if (Model.ProductPrice.DisplayTaxShippingInfo)
+                    {
+                        var inclTax = await workContext.GetTaxDisplayTypeAsync() == TaxDisplayType.IncludingTax;
+                        //tax info is already included in the price (incl/excl tax). that's why we display only shipping info here
+                        //of course, you can modify appropriate locales to include VAT info there
+                        <span class="tax-shipping-info">
+                            @T(inclTax ? "Products.Price.TaxShipping.InclTax" : "Products.Price.TaxShipping.ExclTax", Url.RouteTopicUrl("shippinginfo"))
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ProductPrice.BasePricePAngV))
+                    {
+                        <div class="base-price-pangv">
+                            @Model.ProductPrice.BasePricePAngV
+                        </div>
+                    }
+                </div>
+            </div>
+
+
+
+        }
+        else
+        {
+            <div class="product-titleall">
+                <h2 class="product-title">
+                    <a href="@(Url.RouteUrl<Product>(new { SeName = Model.SeName }))">@Model.Name</a>
+                    @if (isSubstituteResult)
+                    {
+                        <span class="substitute-flag">(@substituteText)</span>
+                    }
+                </h2>
+                @if (!string.IsNullOrEmpty(categoryName))
+                {
+
+
+                    <p class="product-titlecat">
+                        <a href="@Url.RouteUrl("Category", new { SeName = categorySeName })" class="CAT">@categoryName</a>
+
+                    </p>
+                }
+            </div>
+            <!--<div class="add-info outlogin">
+            <div class="buttons but1">
+                <div class="ajax-cart-button-wrapper" data-productid="7" data-isproductpage="false">
+                    <button type="button"
+                            class="button-2 product-box-add-to-cart-button nopAjaxCartProductListAddToCartButton"
+                            data-productid="7"
+                            tabindex="0"
+                            onclick="window.location.href='/login'" title="@T("addtocart")">
+                        @T("addtocart")
+                    </button>
+                </div>
+            </div>-->
+            @*<div class="buttons but3" style="width: calc(-8.75% - 10px); height: 40px; box-sizing: border-box;">
+                    <button type="button"
+                            value="Add to wishlist"
+                            title="Add to wishlist"
+                            class="button-2 add-to-wishlist-button"
+                            id="add-wishlist-modal-btn-7"
+                            tabindex="0"
+                            onclick="window.location.href='/login'">
+                    </button>
+                </div>*@
+            @*<div class="quick-view-button" style="width: calc(-8.75% - 10px); height: 40px; box-sizing: border-box;">
+                    <a title="Quick View"
+                       tabindex="0"
+                       onclick="window.location.href='/login'">Quick View</a>
+                </div>*@
+            <!--<div class="quote-add home N">
+                    <button type="button"
+                            onclick="window.location.href='/login'"
+                            class="add-to-qcart button-2 quote-add-btn product-box-add-to-qcart-button"
+                            tabindex="0" title="@("nopstation.plugin.misc.quotecart.cart.addbutton")">
+                        @T("nopstation.plugin.misc.quotecart.cart.addbutton")
+                    </button>
+                </div>
+            </div>-->
+
+
+        }
+
+        <div class="logpric"></div>
+        <div class="description gram BRAND" @(catalogSettings.ShowShortDescriptionOnCatalogPages ? "" : "data-short-description=none")>
+            @if (firstBrandMapping != null)
+            {
+                var brand = await ManufacturerService.GetManufacturerByIdAsync(firstBrandMapping.ManufacturerId);
+                @if (!string.IsNullOrEmpty(brand?.Name))
+                {
+
+                    @Html.Raw(brand.Name)
+
+
+                }
+            }
+        </div>
+        <div class="description gram Weight">
+            @*@product.Weight.ToString("0.############################", CultureInfo.InvariantCulture)*@
+            @product.Weight.ToString("0.##", CultureInfo.CurrentCulture) 
+
+        </div>
+        <div class="description gram stock">
+            <div class="outo listblock" style="display:none;">
+                @if (StockQuantity > 0)
+                {
+                    <div class="blockstok" style="display: block; float: left; margin-top: 10px;">
+                        @*@T("Qty"):*@ @StockQuantity.ToString() @T("pcs")
+                        @*@T("متوفر في المخزون") *@
+                    </div>
+                }
+                else
+                {
+                    <div class="outofstok" style="display: block; float: left; margin-top: 10px; color: red;">
+                        @T("غير متوفر في المخزون")
+                    </div>
+                }
+            </div>
+        </div>
+        @*<div class="outo listblock" style="display:none;">
+                @if (StockQuantity > 0)
+                {
+                    <div class="blockstok" style="display: block; float: left; margin-top: 10px;">
+                        @T("متوفر في المخزون")
+                    </div>
+                }
+                else
+                {
+                    <div class="outofstok" style="display: block; float: left; margin-top: 10px; color: red;">
+                        @T("غير متوفر في المخزون")
+                    </div>
+                }
+            </div>*@
+        @if (!string.IsNullOrEmpty(CurrentCustomer.Email) && !string.IsNullOrEmpty(CurrentCustomer.FirstName))
+        {
+            <div class="add-Logined list" style="display:none">
+                <div class="prices" style="display:none">
+                    @if (!string.IsNullOrEmpty(Model.ProductPrice.OldPrice))
+                    {
+                        <span class="price old-price">@Model.ProductPrice.OldPrice</span>
+                    }
+                    <span class="price actual-price">@(isZeroPrice ? "On Request" : Model.ProductPrice.Price)</span>
+                    @if (Model.ProductPrice.DisplayTaxShippingInfo)
+                    {
+                        var inclTax = await workContext.GetTaxDisplayTypeAsync() == TaxDisplayType.IncludingTax;
+                        //tax info is already included in the price (incl/excl tax). that's why we display only shipping info here
+                        //of course, you can modify appropriate locales to include VAT info there
+                        <span class="tax-shipping-info">
+                            @T(inclTax ? "Products.Price.TaxShipping.InclTax" : "Products.Price.TaxShipping.ExclTax", Url.RouteTopicUrl("shippinginfo"))
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ProductPrice.BasePricePAngV))
+                    {
+                        <div class="base-price-pangv">
+                            @Model.ProductPrice.BasePricePAngV
+                        </div>
+                    }
+                </div>
+            </div>
+
+
+
+        }
+        <div class="prices">
+            @if (!string.IsNullOrEmpty(Model.ProductPrice.OldPrice))
+            {
+                <span class="price old-price">@Model.ProductPrice.OldPrice</span>
+            }
+            <span class="price actual-price">@(isZeroPrice ? "On Request" : Model.ProductPrice.Price)</span>
+            @if (Model.ProductPrice.DisplayTaxShippingInfo)
+            {
+                var inclTax = await workContext.GetTaxDisplayTypeAsync() == TaxDisplayType.IncludingTax;
+                //tax info is already included in the price (incl/excl tax). that's why we display only shipping info here
+                //of course, you can modify appropriate locales to include VAT info there
+                <span class="tax-shipping-info">
+                    @T(inclTax ? "Products.Price.TaxShipping.InclTax" : "Products.Price.TaxShipping.ExclTax", Url.RouteTopicUrl("shippinginfo"))
+                </span>
+            }
+            @if (!string.IsNullOrEmpty(Model.ProductPrice.BasePricePAngV))
+            {
+                <div class="base-price-pangv">
+                    @Model.ProductPrice.BasePricePAngV
+                </div>
+            }
+        </div>
+
+        @if (catalogSettings.ShowSkuOnCatalogPages && !string.IsNullOrEmpty(Model.Sku))
+        {
+            <div class="sku">
+                @Model.Sku
+            </div>
+        }
+        @if (Model.ReviewOverviewModel.AllowCustomerReviews)
+        {
+            var ratingPercent = 0;
+            if (Model.ReviewOverviewModel.TotalReviews != 0)
+            {
+                ratingPercent = ((Model.ReviewOverviewModel.RatingSum * 100) / Model.ReviewOverviewModel.TotalReviews) / 5;
+            }
+            <div class="product-rating-box" title="@string.Format(T("Reviews.TotalReviews").Text, Model.ReviewOverviewModel.TotalReviews)">
+                <div class="rating">
+                    <div style="width: @(ratingPercent)%">
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(CurrentCustomer.Email) && !string.IsNullOrEmpty(CurrentCustomer.FirstName))
+        {
+            <div class="add-info">
+
+
+                @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.ProductBoxAddinfoBefore, additionalData = Model })
+
+                @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductBoxAddinfoMiddle, additionalData = Model })
+
+
+                @*<div class="buttons but2">
+                    @if (!Model.ProductPrice.DisableAddToCompareListButton)
+                    {
+                    <button type="button" value="@T("ShoppingCart.AddToCompareList")" title="@T("ShoppingCart.AddToCompareList")" class="button-2 add-to-compare-list-button" onclick="AjaxCart.addproducttocomparelist('@addtocomparelink');return false;" />
+                    }
+                    </div>*@
+                <style>
+                    body.home-page-body.font-comfortaa.item-type-1 .buttons.but3.wich {
+                        display: none !important
+                    }
+
+                    body .add-info .buttons.but3.wich {
+                        width: 40px !important;
+                        height: 40px;
+                        border-radius: 6px !important;
+                        color: blue;
+                        background-color: #f9a01b;
+                        margin-right: 8px;
+                        border-right: 0;
+                    }
+
+                    .product-list .quote-add.home {
+                        margin-right: 8px;
+                    }
+
+                    .product-list .buttons.but3.wich {
+                        margin-left: 0 !important;
+                    }
+                </style>
+                <div class="buttons but3 wich">
+                    @if (!Model.ProductPrice.DisableWishlistButton)
+                    {
+                        <button type="button" value="@T("ShoppingCart.AddToWishlist")" title="@T("ShoppingCart.AddToWishlist")" class="button-2 add-to-wishlist-button" id="add-wishlist-modal-btn-@Model.Id" onclick="AddToWishlistModalCatalog('@Model.Id'); return false;" />
+                    }
+                </div>
+                @*<div class="quick-view-button"><a title="Quick View">Quick View</a></div>*@
+
+                @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.ProductBoxAddinfoAfter, additionalData = Model })
+                @*<div class="in stock" style="
+                    display: block;
+                    float: left;margin-top:10px;
+                    ">in stock</div>*@
+                <div class="buttons but1">
+                    @if (!Model.ProductPrice.DisableBuyButton)
+                    {
+                        var addToCartText = T("ShoppingCart.AddToCart").Text;
+                        if (Model.ProductPrice.IsRental)
+                        {
+                            addToCartText = T("ShoppingCart.Rent").Text;
+                        }
+                        if (Model.ProductPrice.AvailableForPreOrder)
+                        {
+                            addToCartText = T("ShoppingCart.PreOrder").Text;
+                        }
+                        <button type="button" value="@(addToCartText)" class="button-2 product-box-add-to-cart-button" data-Stok="@StockQuantity" onclick="AjaxCart.addproducttocart_catalog('@addtocartlink');return false;">@(addToCartText)</button>
+                    }
+                </div>
+            </div>
+
+
+
+        }
+        else
+        {
+
+            <div class="add-info outlogin">
+                <div class="buttons but1">
+                    <div class="ajax-cart-button-wrapper" data-productid="7" data-isproductpage="false">
+                        @*<button type="button"
+                                    class="button-2 product-box-add-to-cart-button nopAjaxCartProductListAddToCartButton"
+                                    data-productid="7"
+                                    tabindex="0"
+                                    onclick="window.location.href='/login'" title="@T("addtocart")">
+                                @T("addtocart")
+                            </button>*@
+                        <button type="button" data-Stok="@StockQuantity"
+                                class="button-2 product-box-add-to-cart-button nopAjaxCartProductListAddToCartButton"
+                                data-productid="7"
+                                tabindex="0"
+                                onclick="window.location.href='/login'" title="@T("addtocart")">
+                            @T("addtocart")
+                        </button>
+                    </div>
+                </div>
+                @*<div class="buttons but3 wich">
+                        @if (!Model.ProductPrice.DisableWishlistButton)
+                        {
+                            <button type="button" value="@T("ShoppingCart.AddToWishlist")" title="@T("ShoppingCart.AddToWishlist")" class="button-2 add-to-wishlist-button" id="add-wishlist-modal-btn-@Model.Id" onclick="AddToWishlistModalCatalog('@Model.Id'); return false;" />
+                        }
+                    </div>*@
+                @*<div class="buttons but3" style="width: calc(-8.75% - 10px); height: 40px; box-sizing: border-box;">
+                        <button type="button"
+                                value="Add to wishlist"
+                                title="Add to wishlist"
+                                class="button-2 add-to-wishlist-button"
+                                id="add-wishlist-modal-btn-7"
+                                tabindex="0"
+                                onclick="window.location.href='/login'">
+                        </button>
+                    </div>*@
+                @*<div class="quick-view-button" style="width: calc(-8.75% - 10px); height: 40px; box-sizing: border-box;">
+                        <a title="Quick View"
+                           tabindex="0"
+                           onclick="window.location.href='/login'">Quick View</a>
+                    </div>*@
+
+                <div class="quote-add home N">
+                    <button type="button"
+                            onclick="window.location.href='/login'"
+                            class="add-to-qcart button-2 quote-add-btn product-box-add-to-qcart-button"
+                            tabindex="0" title="@("nopstation.plugin.misc.quotecart.cart.addbutton")">
+                        @T("nopstation.plugin.misc.quotecart.cart.addbutton")
+                    </button>
+                </div>
+            </div>
+
+
+        }
+
+
+    </div>
+</div>
+<style>
+    .blockinstock {
+        background-color: #f00 !important;
+        color: white !important;
+        width: fit-content !important;
+        position: absolute;
+        z-index: 1000;
+        padding: 10px !important;
+        border-radius: 11px;
+        margin: 10px;
+        font-weight: bold;
+    }
+
+    h2.product-title {
+        width: 100%;
+        margin-top: 10px !important;
+        float: left;
+    }
+
+    .in-stock {
+        color: green;
+    }
+
+    .out-of-stock {
+        color: red;
+    }
+
+    .buttons {
+        width: 100%;
+    }
+
+        .buttons .ajax-cart-button-wrapper {
+            width: 100% !important;
+            min-width: auto !important;
+        }
+
+
+    .quick-view-button {
+        width: 21% !important;
+        margin-right: 4.4px !important;
+        min-width: auto !important;
+    }
+
+    .quote-add.home {
+        width: 23% !important;
+        min-width: auto !important;
+        position: relative;
+        top: -3px;
+    }
+
+    .product-grid .item-box .details {
+        padding-top: 0;
+    }
+
+    .add-to-wishlist-button {
+        width: 23% !important;
+        min-width: auto !important;
+        margin-right: 1% !important;
+    }
+
+    .add-to-wishlist-button {
+        margin-left: 0 !IMPORTANT;
+    }
+
+    .buttons button {
+        padding: 0 !IMPORTANT;
+    }
+
+    .quick-view-button a {
+        height: 40px !important;
+        width: 100% !important;
+    }
+
+    .item-type-1 .product-grid .quick-view-button a:before, .bestsellers.product-grid .item-box .quick-view-button a:before {
+        width: 0;
+    }
+
+    @@media (max-width: 1200px) {
+        .product-grid button.add-to-qcart.button-2.quote-add-btn {
+            background: url(/Themes/Prisma/Content/img/Quote.png) no-repeat center #d8d8d8 !important;
+        }
+
+        .product-grid button.button-2.product-box-add-to-cart-button {
+            font-size: 4px !important;
+        }
+
+        .quote-add.home {
+            float: left;
+        }
+
+        .quote-add.home {
+            top: 0px;
+        }
+
+        button .button-2.product-box-add-to-cart-button {
+            width: 23% !important;
+            margin-right: 1% !important;
+            min-width: auto !important;
+        }
+
+        button.button-2.add-to-wishlist-button {
+            width: 23% !important;
+            min-width: auto !important;
+            margin-right: 1% !important;
+        }
+
+        .in.stock.out-of-stock {
+            width: 100%;
+            display: block;
+            float: left;
+        }
+
+        .add-info {
+            display: block;
+        }
+
+        .buttons.but2 {
+            display: none;
+        }
+
+        .buttons.but1 {
+            margin-right: 0;
+        }
+    }
+
+    .buttons.but1 {
+    }
+
+    .add-info {
+        float: left;
+        width: 100%;
+    }
+
+        .add-info .quick-view-button {
+            background-color: white;
+        }
+
+    .product-grid.active .item-box {
+        margin-bottom: 0px !important;
+    }
+
+    .spc-categories .product-grid.active {
+        padding: 20px;
+        padding-bottom: 0;
+    }
+
+
+    .buttons .ajax-cart-button-wrapper {
+        background-color: #1f278a;
+    }
+    /*  .buttons.but1 {
+        background-color: #1f278a;
+    }*/
+    body .quick-view-button:hover a {
+        background-color: #fdbb2d !important;
+    }
+
+    button.add-to-qcart.button-2.quote-add-btn:hover {
+        background-color: #fdbb2d !important;
+    }
+
+    .item-box .buttons {
+        width: 23% !important;
+    }
+
+    .substitute-flag {
+        font-size: 12px;
+        font-weight: 700;
+        margin-left: 6px;
+        color: #d9534f; 
+    }
+
+    html[dir="rtl"] .substitute-flag {
+        margin-left: 0;
+        margin-right: 6px;
+    }
+</style>
+@*<script>
+
+        $(document).ready(function () {
+            // Loop through each block with the class 'add-info'
+            $('.add-info').each(function () {
+                // Find the buttons container
+                var buttonsContainer = $(this).find('.buttons');
+
+                // Move 'quick-view-button' and 'quote-add home' inside the buttons container
+                $(this).find('.quick-view-button, .quote-add.home').appendTo(buttonsContainer);
+
+            });
+        });
+
+    </script>*@
+
+<style>
+    .prices {
+        float: left;
+        width: 100%;
+    }
+
+    .buttons.but1 {
+        width: 21%;
+        float: left;
+        margin-right: 0px;
+    }
+
+    .buttons.but2 {
+    }
+
+    .buttons.but3 {
+        width: 21%;
+        float: left;
+        margin-right: 4.4px;
+        margin-left: 4.4px !important;
+    }
+
+    .quick-view-button {
+        width: 20%;
+        float: left;
+    }
+
+    button#add-wishlist-modal-btn-2 {
+    }
+
+    button.button-2.add-to-wishlist-button {
+        width: 100% !important;
+        float: left;
+    }
+
+    .quote-add.home {
+        top: 0 !important;
+        float: left;
+    }
+
+    button.add-to-qcart.button-2.quote-add-btn {
+        top: 0;
+    }
+
+    .add-info .buttons.but3 {
+        background-color: #1f278a;
+    }
+
+    .add-info .buttons.but1 {
+        background-color: #1f278a;
+    }
+
+    .add-info .quick-view-button {
+        background-color: #1f278a;
+    }
+
+    .add-info .quote-add.home {
+        background-color: #1f278a;
+    }
+
+    body h2.product-title {
+        margin-top: 15px !important;
+    }
+
+    html[dir="rtl"] .product-grid .buttons.but1 {
+        width: 72px !IMPORTANT;
+        margin-right: 3%;
+    }
+
+    .spc-products .item-box .picture a {
+        border: 0;
+    }
+
+    .product-grid .buttons.but1 {
+        width: 75% !IMPORTANT;
+        margin-right: 2%;
+    }
+
+    @@media (max-width: 1200px) {
+        button.add-to-qcart.button-2.quote-add-btn {
+            background: url(/Themes/Prisma/Content/img/Quote.png) no-repeat center #d8d8d8 !important;
+        }
+    }
+
+    @@media (max-width:400px) {
+        .product-grid button.add-to-qcart.button-2.quote-add-btn {
+            background: url(/Themes/Prisma/Content/img/Quote.png) no-repeat center #d8d8d8 !important;
+        }
+
+        .spc-categories .category-title {
+            font-size: 15px;
+            color: #fff;
+        }
+
+        .product-grid .buttons.but1 {
+            width: 47% !IMPORTANT;
+            margin-right: 2%;
+        }
+
+        html[dir="ltr"] .product-grid button.button-2.product-box-add-to-cart-button {
+            font-size: 10px !important;
+        }
+
+        html[dir="rtl"] .product-grid button.button-2.product-box-add-to-cart-button {
+            font-size: 10px !important;
+        }
+
+        html[dir="ltr"] .product-grid button.button-2.product-box-add-to-cart-button, html[dir="rtl"] .product-grid button.button-2.product-box-add-to-cart-button {
+            width: 100% !important;
+        }
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        if ($('.viewmode-icon.list.selected').length) {
+            $('.product-grid.ajaxBusyPanelParent.nop7SpikesAjaxFiltersGrid')
+                .attr('class', 'product-list nop7SpikesAjaxFiltersGrid ajaxBusyPanelParent');
+        }
+    });
+</script>
+
+<script>
+    $('.item-box').each(function () {
+        var $box = $(this);
+
+        // نجيب الـ add-Logined اللي جوه البلوك الحالي
+        var $priceBlock = $box.find('.home-page-body .add-Logined');
+
+        // نحطه جوه الـ logpric في نفس البلوك
+        $box.find('.home-page-body .logpric').append($priceBlock);
+    });
+</script>
+<script asp-location="Footer">
+    $(document).ready(function () {
+        setInterval(function () {
+            $('.item-box').each(function () {
+                var $itemBox = $(this);
+                var $outOfStock = $itemBox.find('.outofstok');
+
+                if ($outOfStock.length > 0 && $outOfStock.is(':visible')) {
+
+                    if (!$itemBox.hasClass('disaplebut')) {
+
+                        $itemBox.addClass('disaplebut');
+
+                        // تعطيل أزرار الكارت والكمية
+                        var $ajaxCartButtonWrapper = $itemBox.find('.ajax-cart-button-wrapper');
+                        $ajaxCartButtonWrapper.addClass('disabled-wrapper');
+                        $ajaxCartButtonWrapper.find('.productQuantityTextBox').prop('disabled', true);
+                        $ajaxCartButtonWrapper.find('.product-box-add-to-cart-button').prop('disabled', true).addClass('disabled');
+                        $ajaxCartButtonWrapper.css('opacity', '0.3');
+
+                        // 🔥 إزالة السعر نفسه فقط
+                        $itemBox.find('.price.actual-price').text('');
+                    }
+                }
+            });
+        }, 0);
+    });
+</script>
+
+<script asp-location="Footer">
+    document.querySelectorAll('.product-item').forEach(function (product) {
+
+        var price = product.querySelector('.actual-price');
+        var buttonWrap = product.querySelector('.buttons.but1');
+
+        if (price) {
+            var priceText = price.textContent.replace(/[^0-9.]/g, '');
+
+            if (parseFloat(priceText) === 0) {
+                buttonWrap.classList.add('price-zero');
+            }
+        }
+
+    });
+</script>
+
+<script asp-location="Footer">
+    function checkOnRequest() {
+        document.querySelectorAll('.details').forEach(function (el) {
+            var price = el.querySelector('.price.actual-price');
+
+            if (price && price.textContent.trim() === 'On Request') {
+                el.classList.add('OnRequest');
+            }
+        });
+    }
+
+    // أول تحميل
+    document.addEventListener("DOMContentLoaded", checkOnRequest);
+
+    // متابعة أي تغيير (Ajax)
+    const observer = new MutationObserver(checkOnRequest);
+    observer.observe(document.body, { childList: true, subtree: true });
+</script>
+
+<script asp-location="Footer">
+(function () {
+    // كل product box بيسجّل الـ ID بتاعه
+    window._wishlistBoxIds = window._wishlistBoxIds || [];
+    window._wishlistBoxIds.push('@Model.Id');
+
+    // debounce: بنستنى لغاية ما كل الـ boxes تتسجّل، بعدين نعمل request واحدة
+    if (window._wishlistBoxTimer) clearTimeout(window._wishlistBoxTimer);
+    window._wishlistBoxTimer = setTimeout(function () {
+        var ids = window._wishlistBoxIds || [];
+        if (!ids.length) return;
+
+        var wishlistUrl = ($('.wishlist-button a.ico-wishlist').attr('href')
+            || $('a.ico-wishlist').attr('href')
+            || $('a[href*="wishlist"]').first().attr('href')
+            || '/wishlist'
+        ).trim();
+
+        console.log('[WishlistBox] url=' + wishlistUrl + ' ids=' + JSON.stringify(ids));
+
+        $.ajax({
+            url: wishlistUrl,
+            type: 'GET',
+            cache: false,
+            success: function (html) {
+                var $html = $('<div>').html(html);
+
+                ids.forEach(function (pid) {
+                    pid = String(pid);
+                    var found = false;
+
+                    $html.find('a[href]').each(function () {
+                        if (($(this).attr('href') || '').indexOf(pid) !== -1) {
+                            found = true;
+                            return false;
+                        }
+                    });
+
+                    if (!found) {
+                        $html.find('button, input').each(function () {
+                            if (($(this).attr('onclick') || '').indexOf(pid) !== -1) {
+                                found = true;
+                                return false;
+                            }
+                        });
+                    }
+
+                    console.log('[WishlistBox] pid=' + pid + ' found=' + found + ' btn=' + $('#add-wishlist-modal-btn-' + pid).length);
+                    if (found) {
+                        $('#add-wishlist-modal-btn-' + pid).addClass('Active');
+                    }
+                });
+            },
+            error: function (xhr) {
+                console.log('[WishlistBox] AJAX error', xhr.status);
+            }
+        });
+    }, 300);
+
+    // capture-phase listener — يشتغل قبل inline onclick وقبل أي jQuery handler
+    if (!window._wishlistCaptureOverrideDone) {
+        window._wishlistCaptureOverrideDone = true;
+
+        document.addEventListener('click', function (e) {
+            // ابحث عن الزرار في مسار الحدث
+            var btn = e.target;
+            while (btn && btn !== document) {
+                if (btn.classList && btn.classList.contains('add-to-wishlist-button')) break;
+                btn = btn.parentElement;
+            }
+            if (!btn || btn === document || !btn.classList.contains('add-to-wishlist-button')) return;
+
+            // فقط أزرار الـ catalog (add-wishlist-modal-btn-*) وليس زر المنتج الأساسي (add-to-wishlist-button-*)
+            if (!btn.id || !btn.id.startsWith('add-wishlist-modal-btn-')) return;
+
+            // وقف الحدث — inline onclick مش هيشتغل، jQuery handlers مش هتشتغل
+            e.stopPropagation();
+            e.preventDefault();
+
+            // جيب الـ product ID
+            var pid = btn.id.replace('add-wishlist-modal-btn-', '');
+            if (!pid) {
+                var m = (btn.getAttribute('onclick') || '').match(/['"](\d+)['"]/);
+                if (m) pid = m[1];
+            }
+            if (!pid) return;
+
+            var $btn = $(btn);
+
+            if ($btn.hasClass('Active')) {
+                // إزالة من الويشليست
+                $btn.removeClass('Active');
+                wishlistRemove(pid, $btn);
+            } else {
+                // إضافة للويشليست
+                $btn.addClass('Active');
+                wishlistAdd(pid, $btn);
+            }
+        }, true); // true = capture phase
+
+        function updateWishlistCounter(delta) {
+            $('.wishlist-qty').each(function () {
+                var n = parseInt($(this).text(), 10) || 0;
+                $(this).text(Math.max(0, n + delta));
+            });
+        }
+
+        function wishlistAdd(pid, $btn) {
+            var url = '/addproducttocart/catalog/' + pid + '/2/1';
+
+            var _origNotify = window.displayBarNotification;
+            window.displayBarNotification = function () {};
+            if (window.AjaxCart && typeof AjaxCart.addproducttocart_catalog === 'function') {
+                AjaxCart.addproducttocart_catalog(url);
+            } else {
+                $.ajax({ url: url, type: 'POST', cache: false,
+                    data: window.addAntiForgeryToken ? addAntiForgeryToken({}) : {} });
+            }
+            setTimeout(function () { window.displayBarNotification = _origNotify; }, 1000);
+            updateWishlistCounter(1);
+        }
+
+        function wishlistRemove(pid, $btn) {
+            var wishlistUrl = ($('.wishlist-button a.ico-wishlist, a.ico-wishlist').first().attr('href') || '/wishlist').trim();
+            $.ajax({
+                url: wishlistUrl, type: 'GET', cache: false,
+                success: function (html) {
+                    var $html = $('<div>').html(html);
+                    var $removeInput = null;
+                    $html.find('tr').each(function () {
+                        if (($(this).html() || '').indexOf(pid) !== -1) {
+                            $removeInput = $(this).find('input[name="removefromcart"]');
+                            return false;
+                        }
+                    });
+                    var $form = $html.find('form').first();
+                    if (!$removeInput || !$removeInput.length || !$form.length) {
+                        verifyBtn(pid, $btn);
+                        return;
+                    }
+                    var data = {};
+                    $form.find('input, select, textarea').each(function () {
+                        var $el = $(this), name = $el.attr('name'), type = ($el.attr('type') || '').toLowerCase();
+                        if (!name) return;
+                        if (type === 'checkbox' || type === 'radio') { if ($el.prop('checked')) data[name] = $el.val() || 'on'; }
+                        else data[name] = $el.val();
+                    });
+                    data[$removeInput.attr('name')] = $removeInput.val() || 'true';
+                    data['updatecart'] = 'Update wishlist';
+                    $.ajax({
+                        url: $form.attr('action') || wishlistUrl,
+                        type: ($form.attr('method') || 'post').toUpperCase(),
+                        data: data,
+                        success: function () { updateWishlistCounter(-1); },
+                        complete: function () { verifyBtn(pid, $btn); }
+                    });
+                },
+                error: function () { verifyBtn(pid, $btn); }
+            });
+        }
+
+        function verifyBtn(pid, $btn) {
+            var wishlistUrl = ($('.wishlist-button a.ico-wishlist, a.ico-wishlist').first().attr('href') || '/wishlist').trim();
+            $.ajax({
+                url: wishlistUrl, type: 'GET', cache: false,
+                success: function (html) {
+                    var $html = $('<div>').html(html), found = false;
+                    $html.find('a[href]').each(function () {
+                        if (($(this).attr('href') || '').indexOf(pid) !== -1) { found = true; return false; }
+                    });
+                    if (!found) {
+                        $html.find('button,input').each(function () {
+                            if (($(this).attr('onclick') || '').indexOf(pid) !== -1) { found = true; return false; }
+                        });
+                    }
+                    $btn.toggleClass('Active', found);
+                }
+            });
+        }
+    }
+})();
+</script>
+
+

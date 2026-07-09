@@ -1,0 +1,77 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+	  <Copyright>Copyright © NopAdvance LLP</Copyright>
+	  <Company>NopAdvance LLP</Company>
+	  <Authors>NopAdvance LLP</Authors>
+	  <Version>1.14</Version>
+	  <Description>This plugin provides api for the nopcommerce's front end methods.</Description>
+	  <OutputPath>..\..\Presentation\Nop.Web\Plugins\NopAdvance.Plugin.PublicAPI</OutputPath>
+	  <OutDir>$(OutputPath)</OutDir>
+	  <DocumentationFile>$(OutputPath)\NopAdvance.Plugin.PublicAPI.xml</DocumentationFile>
+	  <NoWarn>$(NoWarn);1591</NoWarn>
+	  <NoWarn>$(NoWarn);1573</NoWarn>
+	  <!--Set this parameter to true to get the dlls copied from the NuGet cache to the output of your project.
+		You need to set this parameter to true if your plugin has a nuget package 
+		to ensure that the dlls coped from the NuGet cache to the output of your project-->
+	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="plugin.json;logo.jpg" />
+		<None Remove="Areas\Admin\Views\**" />
+
+		<Content Include="plugin.json;logo.jpg" CopyToOutputDirectory="PreserveNewest" />
+		<Content Include="Areas\Admin\Views\**;Localization\**;Content\**" CopyToOutputDirectory="PreserveNewest" />
+
+		<EmbeddedResource Include="p.txt" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <PackageReference Include="FastMember" Version="1.5.0" />
+	  <PackageReference Include="HtmlAgilityPack.NetCore" Version="1.5.0.1" />
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.4" />
+	  <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
+	  <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="7.2.0" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <ProjectReference Include="..\NopAdvance.Plugin.Core\NopAdvance.Plugin.Core.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Reference Include="SevenSpikes.Nop.Core">
+	    <HintPath>..\..\Presentation\Nop.Web\Plugins\SevenSpikes.Core\SevenSpikes.Nop.Core.dll</HintPath>
+	  </Reference>
+	  <Reference Include="SevenSpikes.Nop.Framework">
+	    <HintPath>..\..\Presentation\Nop.Web\Plugins\SevenSpikes.Core\SevenSpikes.Nop.Framework.dll</HintPath>
+	  </Reference>
+	  <Reference Include="SevenSpikes.Nop.Plugins.AnywhereSliders">
+	    <HintPath>..\..\Presentation\Nop.Web\Plugins\SevenSpikes.Nop.Plugins.AnywhereSliders\SevenSpikes.Nop.Plugins.AnywhereSliders.dll</HintPath>
+	  </Reference>
+	  <Reference Include="SevenSpikes.Nop.Plugins.JCarousel">
+	    <HintPath>..\..\Presentation\Nop.Web\Plugins\SevenSpikes.Nop.Plugins.JCarousel\SevenSpikes.Nop.Plugins.JCarousel.dll</HintPath>
+	  </Reference>
+	  <Reference Include="SevenSpikes.Nop.Plugins.MegaMenu">
+	    <HintPath>..\..\Presentation\Nop.Web\Plugins\SevenSpikes.Nop.Plugins.MegaMenu\SevenSpikes.Nop.Plugins.MegaMenu.dll</HintPath>
+	  </Reference>
+	  <Reference Include="SevenSpikes.Nop.Plugins.ProductRibbons">
+	    <HintPath>..\..\Presentation\Nop.Web\Plugins\SevenSpikes.Nop.Plugins.ProductRibbons\SevenSpikes.Nop.Plugins.ProductRibbons.dll</HintPath>
+	  </Reference>
+	  <Reference Include="SevenSpikes.Nop.Plugins.SmartProductCollections">
+	    <HintPath>..\..\Presentation\Nop.Web\Plugins\SevenSpikes.Nop.Plugins.SmartProductCollections\SevenSpikes.Nop.Plugins.SmartProductCollections.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+	
+	<!-- This target execute after "Build" target -->
+	<Target Name="NopTarget" AfterTargets="Build">
+		<!-- Delete unnecessary libraries from plugins path -->
+		<MSBuild Projects="@(ClearPluginAssemblies)" Properties="PluginPath=$(MSBuildProjectDirectory)\$(OutDir)" Targets="NopClear" />
+	</Target>
+</Project>

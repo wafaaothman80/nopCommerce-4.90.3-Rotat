@@ -1,0 +1,123 @@
+﻿@model CategoryNavigationModel
+
+@using Nop.Core.Domain.Catalog
+@inject Nop.Core.IWebHelper webHelper
+
+@functions {
+    bool BreadCrumbContainsCurrentCategoryId(CategorySimpleModel category)
+    {
+        if (Model.CurrentCategoryId == 0)
+            return false;
+
+        if (category.Id == Model.CurrentCategoryId)
+            return true;
+
+        foreach (var subCategory in category.SubCategories)
+        {
+            if (BreadCrumbContainsCurrentCategoryId(subCategory))
+                return true;
+        }
+
+        return false;
+    }
+
+    // async Task CategoryLine(CategoryNavigationModel.CategoryLineModel lineModel, int currentManufacturerId)
+    // {
+    //     var active = lineModel.Category.Id == lineModel.CurrentCategoryId
+    //                  || lineModel.Category.SubCategories.Count(BreadCrumbContainsCurrentCategoryId) > 0;
+
+    //     var last = lineModel.Category.Id == lineModel.CurrentCategoryId;
+    //     var liClass = active ? "active" : "inactive";
+
+    //     if (last)
+    //         liClass += " last";
+
+    //     <li class="@liClass">
+    //         <a href="@Url.Action("Search", "AlgoliaSearch", new { cid = lineModel.Category.Id, mid = currentManufacturerId })">
+    //             @lineModel.Category.Name
+    //             @if (lineModel.Category.NumberOfProducts.HasValue)
+    //             {
+    //                 <text> </text>
+    //                 @T("Categories.TotalProducts", lineModel.Category.NumberOfProducts.Value)
+    //             }
+    //         </a>
+
+    //         @if (lineModel.Category.SubCategories != null && lineModel.Category.SubCategories.Count > 0)
+    //         {
+    //             <ul class="sublist">
+    //                 @foreach (var subCategory in lineModel.Category.SubCategories)
+    //                 {
+    //                     var categoryLineModel = new CategoryNavigationModel.CategoryLineModel
+    //                     {
+    //                         CurrentCategoryId = lineModel.CurrentCategoryId,
+    //                         Category = subCategory
+    //                     };
+    //                     await CategoryLine(categoryLineModel, currentManufacturerId);
+    //                 }
+    //             </ul>
+    //         }
+    //     </li>
+    // }
+}
+
+@{
+    var currentManufacturerId = 0;
+
+  
+    int.TryParse(webHelper.QueryString<string>("mid"), out currentManufacturerId);
+
+   
+    if (currentManufacturerId == 0 &&
+        ViewContext.RouteData.Values["controller"]?.ToString()?.Equals("Catalog", StringComparison.InvariantCultureIgnoreCase) == true &&
+        ViewContext.RouteData.Values["action"]?.ToString()?.Equals("Manufacturer", StringComparison.InvariantCultureIgnoreCase) == true)
+    {
+        int.TryParse(ViewContext.RouteData.Values["manufacturerId"]?.ToString(), out currentManufacturerId);
+    }
+    var currentCategoryId = 0;
+  
+
+
+    int.TryParse(webHelper.QueryString<string>("cid"), out currentCategoryId);
+    int.TryParse(webHelper.QueryString<string>("mid"), out currentManufacturerId);
+
+
+    if (currentCategoryId == 0 &&
+        ViewContext.RouteData.Values["controller"]?.ToString()?.Equals("Catalog", StringComparison.InvariantCultureIgnoreCase) == true &&
+        ViewContext.RouteData.Values["action"]?.ToString()?.Equals("Category", StringComparison.InvariantCultureIgnoreCase) == true)
+    {
+        int.TryParse(ViewContext.RouteData.Values["categoryId"]?.ToString(), out currentCategoryId);
+    }
+}
+
+@if (currentCategoryId>0)
+{
+    
+     <div class="block block-manufacturer-navigation">
+<a class="titleFilter" href="@Url.Action("Search", "AlgoliaSearch", new { cid = currentCategoryId })"> Filters</a>
+</div>
+
+
+
+
+}
+@* @if (Model.Categories.Count > 0)
+{
+    <div class="block block-category-navigation">
+        <div class="title">
+            <strong>@T("Categories")</strong>
+        </div>
+        <div class="listbox">
+            <ul class="list">
+                @foreach (var category in Model.Categories)
+                {
+                    var categoryLineModel = new CategoryNavigationModel.CategoryLineModel
+                    {
+                        CurrentCategoryId = Model.CurrentCategoryId,
+                        Category = category
+                    };
+                    await CategoryLine(categoryLineModel, currentManufacturerId);
+                }
+            </ul>
+        </div>
+    </div>
+} *@

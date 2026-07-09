@@ -1,0 +1,11 @@
+{
+  "Group": "Discount requirements",
+  "FriendlyName": "Shipment Merge Discount",
+  "SystemName": "DiscountRequirement.ShipmentMerge",
+  "Version": "4.90.0",
+  "SupportedVersions": [ "4.90" ],
+  "Author": "Smartly",
+  "DisplayOrder": 10,
+  "FileName": "Nop.Plugin.Shipping.ShipmentMergeDiscount.dll",
+  "Description": "Applies a shipping consolidation discount when a customer has pending unshipped orders to the same address, allowing the merchant to merge shipments."
+}

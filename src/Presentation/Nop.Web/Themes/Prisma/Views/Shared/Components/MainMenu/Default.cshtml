@@ -1,0 +1,97 @@
+@model MenuModel
+
+@using Nop.Core.Domain.Menus;
+@using Nop.Web.Models.Menus
+
+<script src="~/js/public.menu.js" asp-location="Footer"></script>
+<script asp-location="Footer">
+    mainMenu.init('.menu-container .menu__toggle, .menu-container .menu__item-toggle', 'menu-dropdown--active');
+</script>
+<ul class="top-menu menu-dropdown">
+
+    @foreach (var menuItem in Model.Items)
+    {
+        @if (menuItem.ChildrenItems.Any())
+        {
+            @switch (menuItem.Template)
+            {
+                case MenuItemTemplate.Grid:
+                    @await Html.PartialAsync("_MenuItem.Grid.cshtml", menuItem)
+                    break;
+                default:
+                    @await Html.PartialAsync("_MenuItem.List.cshtml", menuItem)
+                    break;
+            }
+        }
+        else
+        {
+            @await Html.PartialAsync("_MenuItem.cshtml", menuItem)
+        }
+    }
+</ul>
+
+<script asp-location="Footer">
+    document.addEventListener('DOMContentLoaded', function () {
+
+        /* ---------- OPEN (PLUS BUTTON) ---------- */
+        document.querySelectorAll('.menu__grid-view .plus-button').forEach(function (btn) {
+
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const parent = btn.parentElement;
+                const submenu =
+                    parent.querySelector(':scope > .sublist-wrap, :scope > .sublist');
+
+                if (!submenu) return;
+
+                submenu.classList.add('active');
+                btn.classList.add('close');
+            });
+        });
+
+        /* ---------- BACK BUTTON ---------- */
+        document.querySelectorAll('.menu__grid-view .back-button').forEach(function (backBtn) {
+
+            backBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const sublist = backBtn.closest('.sublist, .sublist-wrap');
+                if (!sublist) return;
+
+                // close current level
+                sublist.classList.remove('active');
+
+                // remove close icon from related plus button
+                const parent = sublist.parentElement;
+                const plusBtn = parent.querySelector(':scope > .plus-button');
+                if (plusBtn) {
+                    plusBtn.classList.remove('close');
+                }
+            });
+        });
+
+
+        function handleMobileSublist() {
+        const isMobile = window.innerWidth <= 991; // adjust breakpoint if needed
+
+        document.querySelectorAll('.menu__grid-view .menu__group > .sublist')
+            .forEach(function (sublist) {
+                if (isMobile) {
+                    sublist.classList.add('sublist-wrap');
+                } else {
+                    sublist.classList.remove('sublist-wrap');
+                }
+            });
+        }
+
+        // Run on load
+        handleMobileSublist();
+
+        // Run on resize (orientation change / responsive)
+        window.addEventListener('resize', handleMobileSublist);
+
+    });
+</script>

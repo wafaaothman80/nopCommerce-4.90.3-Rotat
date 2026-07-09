@@ -1,0 +1,147 @@
+@model CatalogProductsModel
+
+@if (Model.Products.Count <= 0 &&
+     !Model.PriceRangeFilter.Enabled &&
+     !Model.SpecificationFilter.Enabled &&
+     !Model.ManufacturerFilter.Enabled)
+{
+    return;
+}
+
+<div class="product-selectors">
+    @*view mode*@
+    @if (Model.AllowProductViewModeChanging)
+    {
+        <div class="product-viewmode">
+            <span>@T("Catalog.ViewMode")</span>
+            @if (Model.AvailableViewModes.Count > 1)
+            {
+                var gridMode = Model.AvailableViewModes[0];
+                var listMode = Model.AvailableViewModes[1];
+
+                <a class="viewmode-icon grid @if (gridMode.Selected){
+                <text>selected</text>
+            }
+    " data-viewmode="@gridMode.Value" title="@gridMode.Text" tabindex="0" aria-role="button" href="#">@gridMode.Text</a>
+            <a class="viewmode-icon list @if (listMode.Selected){
+            <text>selected</text>
+        }
+" data-viewmode="@listMode.Value" title="@listMode.Text" tabindex="0" aria-role="button" href="#">@listMode.Text</a>
+                }
+    </div>
+    <script asp-location="Footer">
+        $(function() {
+            var $viewModeEls = $('[data-viewmode]');
+            $viewModeEls.on('click', function () {
+                if (!$(this).hasClass('selected')) {
+                    $viewModeEls.toggleClass('selected');
+                    CatalogProducts.getProducts();
+                }
+                return false;
+            });
+
+            $(CatalogProducts).on('before', function (e) {
+                var $viewModeEl = $('[data-viewmode].selected');
+                if ($viewModeEl) {
+                    e.payload.urlBuilder
+                        .addParameter('viewmode', $viewModeEl.data('viewmode'));
+                }
+            });
+        });
+    </script>
+        }
+
+    <div class="product-filters stock-filter">
+        <div class="filter-title"></div>
+        <div class="filter-content">
+            <div class="available-items">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="instockonly" name="instockonly">
+                    <label class="form-check-label" for="instockonly">Only in-stock items</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="product-discount-filter-inline">
+        <label for="discountOnlyToggle" class="stock-filter-label">
+            <input type="checkbox" id="discountOnlyToggle">
+            <span>Discount only</span>
+        </label>
+    </div>
+    <script asp-location="Footer">
+        $(function () {
+            // Initialize filter state from the current URL on first page load
+            if (typeof window._filterState === 'undefined') {
+                var urlParams = new URLSearchParams(window.location.search);
+                window._filterState = {
+                    inStock: urlParams.get('instockonly') === 'true',
+                    discountOnly: urlParams.get('discountonly') === 'true'
+                };
+            }
+
+            $('#instockonly').prop('checked', window._filterState.inStock);
+            $('#discountOnlyToggle').prop('checked', window._filterState.discountOnly);
+
+            if (!window._catalogFiltersInit) {
+                window._catalogFiltersInit = true;
+
+                $(document).on('change', '#instockonly, #discountOnlyToggle', function () {
+                    window._filterState.inStock = $('#instockonly').is(':checked');
+                    window._filterState.discountOnly = $('#discountOnlyToggle').is(':checked');
+                    CatalogProducts.getProducts();
+                });
+
+                $(CatalogProducts).on('before', function (e) {
+                    e.payload.urlBuilder
+                        .addParameter('instockonly', window._filterState.inStock)
+                        .addParameter('discountonly', window._filterState.discountOnly);
+                });
+            }
+        });
+    </script>
+
+    @if (Model.AllowProductSorting)
+    {
+        <div class="product-sorting">
+            <span>@T("Catalog.OrderBy")</span>
+            @Html.DropDownList("products-orderby", Model.AvailableSortOptions, new { aria_label = T("Catalog.OrderBy.Label") })
+        </div>
+        <script asp-location="Footer">
+            $(function() {
+                var $orderByEl = $('#products-orderby');
+                $orderByEl.on('change', function () {
+                    CatalogProducts.getProducts();
+                });
+
+                $(CatalogProducts).on('before', function (e) {
+                    e.payload.urlBuilder
+                        .addParameter('orderby', $orderByEl.val());
+                });
+            });
+        </script>
+    }
+
+    @if (Model.AllowCustomersToSelectPageSize)
+    {
+        <div class="product-page-size">
+            <span>@T("Catalog.PageSize")</span>
+            @Html.DropDownList("products-pagesize", Model.PageSizeOptions, new { aria_label = T("Catalog.PageSize.Label") })
+            <span>@T("Catalog.PageSize.PerPage")</span>
+        </div>
+        <script asp-location="Footer">
+            $(function() {
+                var $pageSizeEl = $('#products-pagesize');
+                $pageSizeEl.on('change', function () {
+                    CatalogProducts.getProducts();
+                });
+
+                $(CatalogProducts).on('before', function (e) {
+                    e.payload.urlBuilder
+                        .addParameter('pagesize', $pageSizeEl.val());
+                });
+            });
+        </script>
+    }
+
+</div>

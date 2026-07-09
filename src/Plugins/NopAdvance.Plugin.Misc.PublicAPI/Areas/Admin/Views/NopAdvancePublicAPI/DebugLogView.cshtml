@@ -1,0 +1,168 @@
+@*
+    // ***   ** ****** ****** ****** ******* **     ** ****** ***   ** **** ****
+    // ****  ** **  ** **  ** **  **  **  **  **   **  **  ** ****  ** *    *
+    // ** ** ** **  ** ****** ******  **  **   ** **   ****** ** ** ** *    ***
+    // **  **** **  ** **     **  **  **  **    ***    **  ** **  **** *    *
+    // **   *** ****** **     **  ** *******     *     **  ** **   *** **** ****
+    // **************************************************************************
+    // *                                                                         *
+    // *    NopCommerce Public RESTful API Plugin by NopAdvance team             *
+    // *    Copyright (c) NopAdvance LLP. All Rights Reserved.                   *
+    // *                                                                         *
+    // **************************************************************************
+    // *                                                                         *
+    // *    This software is licensed for use under the terms accepted during    *
+    // *    the purchase of this product. A non-exclusive, non-transferable      *
+    // *    right is granted to use this product on the website for which it was *
+    // *    licensed.                                                            *
+    // *                                                                         *
+    // *    Companies purchasing this product for their customers are permitted, *
+    // *    provided the use complies with the terms outlined in the EULA:       *
+    // *    https://store.nopadvance.com/eula.                                   *
+    // *                                                                         *
+    // *    You may not reverse engineer, decompile, modify, or distribute this  *
+    // *    software without explicit permission from NopAdvance LLP. Any        *
+    // *    violation will result in the termination of your license and may     *
+    // *    lead to legal action.                                                *
+    // *                                                                         *
+    // **************************************************************************
+    // *    Contact: contact@nopadvance.com                                      *
+    // *    Website: https://nopadvance.com                                      *
+    // **************************************************************************
+*@
+@model APIDebugLogModel
+@{
+    Layout = "_AdminLayout";
+    //page title
+    ViewBag.PageTitle = T(LocaleResourceDefaults.DEBUG_LOG_MENU).Text;
+    //active menu item (system name)
+    NopHtml.SetActiveMenuItemSystemName(SiteMapDefaults.DEBUG_LOG_MENU_SYSTEM_NAME);
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">
+        @T(LocaleResourceDefaults.DEBUG_LOG_VIEW_DETAILS)
+        <small>
+            <i class="fas fa-arrow-circle-left"></i>
+            <a asp-action="DebugLogs">@T(LocaleResourceDefaults.DEBUG_LOG_BACK_LIST)</a>
+        </small>
+    </h1>
+    <div class="float-right">
+        <span id="debug-log-delete" class="btn btn-danger">
+            <i class="far fa-trash-alt"></i>
+            @T("Admin.Common.Delete")
+        </span>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="form-horizontal">
+            <div class="cards-group">
+                <div class="card card-default">
+                    <div asp-validation-summary="All"></div>
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="CustomerId" />
+                            </div>
+                            <div class="col-md-9">
+                                @*<div class="form-text-row">@Model.Customer</div>*@
+                                <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.CustomerId">@(!string.IsNullOrEmpty(Model.Customer) ? Model.Customer : T("Admin.Customers.Guest").Text)</a>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="ApplicationName" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.ApplicationName</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="StoreId" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.Store</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="Path" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.Path</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="Method" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.Method</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="StatusCode" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.StatusCode</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="Headers" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.Headers</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="RequestBody" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Html.Raw(Model.RequestBody)</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="QueryString" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.QueryString</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="ResponseBody" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Html.Raw(Model.ResponseBody)</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="ResponseTime" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.ResponseTime</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="CreatedOnUtc" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.CreatedOnUtc</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="debug-log-delete" />

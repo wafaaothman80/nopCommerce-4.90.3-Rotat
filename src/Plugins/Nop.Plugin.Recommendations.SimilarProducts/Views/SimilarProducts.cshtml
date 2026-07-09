@@ -1,0 +1,153 @@
+﻿@using Nop.Plugin.Recommendations.SimilarProducts.Models
+@model IList<SimilarProductOverviewModel>
+
+@{
+    var substituteDict = ViewBag.SubstituteCodeByNopId as Dictionary<int, string>
+        ?? new Dictionary<int, string>();
+}
+
+
+@if (Model?.Any() == true || substituteDict.Any())
+{
+    <style>
+        .add-info {
+            position: relative !important;
+            z-index: 100;
+            max-width: 193px;
+            border: 0;
+        }
+
+        .similar-products-grid.product-list.f .title {
+            color: #1f278a;
+            font-size: 35px;
+            text-align: center;
+            margin-bottom: 15px
+        }
+
+        .product-list .buttons.but1 * {
+            display: inline-flex !important;
+        }
+
+        th.TOPTITEL {
+            BACKGROUND-COLOR: #1f278a;
+            color: #fff !important;
+            margin: 0 !important;
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+            th.TOPTITEL td {
+                color: #fff !important;
+                margin: 0 !important;
+                padding: 10px;
+                font-weight: bold;
+                border-radius: 4px;
+            }
+    </style>
+   
+        @if (Model?.Any() == true)
+        {
+        <div class="similar-products-grid product-list f SubstituteProduct">
+
+            <div class="title">
+                <strong>@T("Plugins.Recommendations.SimilarProducts.SimilarProducts")</strong>
+            </div>
+            <div class="item-grid">
+                @foreach (var item in Model)
+                {
+                    <div class="item-box mm">
+                        @await Html.PartialAsync("_ProductBox", item.Product)
+                        <h3 class="similarity" style="display: none">@item.Similarity</h3>
+                    </div>
+
+                }
+            </div>
+
+        </div>
+           
+
+
+        }
+        
+           
+            @if (substituteDict.Any())
+            {
+            <div class="similar-products-grid product-list f similarknown">
+                <div class="title">
+                    <strong>@T("Plugins.Recommendations.alsoknownas")</strong>
+                </div>
+                <div class="product-grid">
+                    @foreach (var kv in substituteDict)
+                    {
+                        <div class="grid-item">
+                            @kv.Value
+                        </div>
+                    }
+                </div>
+                 </div>
+
+
+
+
+            }
+
+
+      
+
+
+   
+}
+
+<style>
+    .product-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .product-table thead {
+            background-color: #1f2a8a; /* نفس الأزرق */
+        }
+
+        .product-table th {
+            color: #fff;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .product-table td {
+            padding: 22px 16px;
+            font-size: 16px;
+            vertical-align: middle;
+        }
+
+    .product-name {
+        color: #0b1c8f;
+        font-weight: bold;
+    }
+
+    .weight {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .out-stock {
+        color: red;
+        font-weight: bold;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
+        gap: 15px;
+    }
+
+    .grid-item {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+
+
+</style>

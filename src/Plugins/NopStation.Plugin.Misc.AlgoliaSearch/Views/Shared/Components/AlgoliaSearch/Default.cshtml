@@ -1,0 +1,618 @@
+﻿@model AlgoliaSearchModel
+@inject Nop.Core.Domain.Catalog.CatalogSettings catalogSettings
+@inject Nop.Core.IStoreContext storeContext
+@inject Nop.Core.IWebHelper webHelper
+@{
+    NopHtml.AddCssFileParts("/Plugins/NopStation.Plugin.Misc.AlgoliaSearch/Contents/css/styles.css", string.Empty);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "https://cdn.jsdelivr.net/algoliasearch/3/algoliasearch.min.js", excludeFromBundle: true);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "https://cdn.jsdelivr.net/autocomplete.js/0/autocomplete.min.js", excludeFromBundle: true);
+    var autoCompleteUrl = Url.Action("AutoComplete", "AlgoliaSearchPublic");
+}
+
+<style>
+    /* ===== Card ===== */
+    .algolia-search-card {
+        background: white;
+        border-radius: 12px;
+        padding: 28px 32px;
+        box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+
+    /* ===== Tabs ===== */
+    .search-widget-tabs {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+
+    .tab-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 22px;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all .2s ease;
+        background: transparent;
+        color: #555;
+    }
+
+        .tab-button.active {
+            background-color: #1a1f6b;
+            color: white;
+            box-shadow: 0 2px 8px rgba(26,31,107,.25);
+        }
+
+        .tab-button:not(.active):hover {
+            background-color: #f0f2f5;
+        }
+
+    /* ===== Item search ===== */
+    .item-search-row {
+        display: flex;
+        width: 100%;
+    }
+
+        .item-search-row .input-field {
+            border-radius: 8px 0 0 8px;
+            border-right: none;
+            flex: 1;
+        }
+
+        .item-search-row .search-btn {
+            border-radius: 0 8px 8px 0;
+            flex-shrink: 0;
+        }
+
+    /* ===== Input ===== */
+    .input-field {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #111827;
+        box-sizing: border-box;
+        height: 42px;
+        transition: border-color .2s;
+        outline: none;
+    }
+
+        .input-field:focus {
+            border-color: #1f278a;
+            box-shadow: 0 0 0 3px rgba(31,39,138,.08);
+        }
+
+    .range-input-group {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .exact-input-group {
+        margin-bottom: 8px;
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    /* ===== Dimension grid ===== */
+    .dimension-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    @@media (max-width: 768px) {
+        .dimension-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ===== Labels ===== */
+    .label-text {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #374151;
+        margin-bottom: 10px;
+    }
+
+    .label-unit {
+        font-weight: 400;
+        color: #9ca3af;
+        margin-left: 4px;
+    }
+
+    /* ===== Toggle range/exact ===== */
+    .toggle-group {
+        display: flex;
+        gap: 16px;
+        margin-top: 6px;
+    }
+
+    .toggle-link {
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        padding-bottom: 2px;
+        transition: color .2s;
+    }
+
+    .toggle-active {
+        color: #e6a800;
+        border-bottom: 2px solid #e6a800;
+    }
+
+    .toggle-inactive {
+        color: #9ca3af;
+        border-bottom: 2px solid transparent;
+    }
+
+        .toggle-inactive:hover {
+            color: #555;
+        }
+
+    /* ===== Dimension footer ===== */
+    .dimension-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+    }
+
+    .info-text {
+        font-size: 13px;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* ===== Search button ===== */
+    .search-btn {
+        padding: 12px 32px;
+        background-color: #1a1f6b;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color .2s;
+        white-space: nowrap;
+        height: 48px;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(26,31,107,.25);
+    }
+
+        .search-btn:hover {
+            background-color: #0e164a;
+        }
+
+    /* ===== Autocomplete ===== */
+    .algolia-autocomplete {
+        width: 100%;
+    }
+
+        .algolia-autocomplete .aa-dropdown-menu {
+            width: 100%;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,.12);
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 10000;
+        }
+
+    .autocomplete-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #f3f4f6;
+        text-decoration: none;
+        color: inherit;
+    }
+
+        .autocomplete-item:hover {
+            background-color: #f9fafb;
+        }
+
+    .item-image {
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-name {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+
+    .item-manufacturer {
+        font-size: 12px;
+        color: #666;
+        font-style: italic;
+    }
+
+    .item-substitute {
+        margin-top: 4px;
+        font-size: 11px !important;
+        color: #ef4444;
+    }
+
+    .no-result {
+        padding: 12px;
+        color: #666;
+    }
+
+    /* ===== Header context overrides (.newheader) ===== */
+    .newheader .algolia-search-card {
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        border-radius: 0;
+    }
+
+    .newheader .search-widget-tabs {
+        margin-bottom: 8px;
+    }
+
+    .newheader .tab-button {
+        background: transparent;
+        color: #fff;
+    }
+
+        .newheader .tab-button.active {
+            background: transparent;
+            color: #fdcd64;
+        }
+
+    .newheader .label-text {
+        color: #fff;
+    }
+
+    .newheader .label-unit {
+        color: rgba(255,255,255,.6);
+    }
+
+    .newheader .toggle-active {
+        color: #fdcd69;
+        border-color: #fdcd69;
+    }
+
+    .newheader .toggle-inactive {
+        color: rgba(255,255,255,.5);
+    }
+
+    .newheader .search-btn {
+        background-color: #246eec;
+    }
+
+    .newheader .dimension-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .newheader .dimension-footer .info-text {
+        color: rgba(255,255,255,.7);
+    }
+
+    .newheader .search-widget-tabs {
+        flex-direction: row-reverse;
+        justify-content: center;
+    }
+
+    .header-wrapper {
+        height: 100px;
+    }
+</style>
+
+<div class="algolia-search-card">
+
+
+    @* Tabs  *@
+    <div class="search-widget-tabs">
+        <button type="button" class="tab-button search-tab" data-tab="item">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            @T("Search by item")
+        </button>
+        <button type="button" class="tab-button search-tab active" data-tab="dimension">
+            <i class="fa-solid fa-ruler-combined"></i>
+            @T("Search by dimensions")
+        </button>
+    </div>
+
+
+    @* Item Search Panel  *@
+    <div class="search-form" data-form="item" style="display:none">
+        <style>
+            #small-searchterms::placeholder {
+                color: #9ca3af;
+                font-size: 14px;
+            }
+        </style>
+        <form asp-route="ProductSearch" method="get" id="item-search-form">
+            <div class="item-search-row">
+                <input type="text" class="input-field" id="small-searchterms"
+                       name="q" autocomplete="off"
+                       placeholder="@T("Search.SearchBox.Text.Label")"
+                       aria-label="@T("Search.SearchBox.Text.Label")" />
+                @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.SearchBoxBeforeSearchButton })
+                <button type="submit" class="button-1 search-btn">@T("Search.Button")</button>
+            </div>
+        </form>
+    </div>
+
+
+    @* Dimension Search Panel  *@
+    <div class="search-form active" data-form="dimension">
+        <form method="get" id="dimension-search-form" action="@Url.Action("Range", "AlgoliaRangeSearch")">
+            <div id="dimension-messages"></div>
+            <input type="hidden" id="dimension-search-query" name="q" value="" />
+
+            <div class="dimension-grid">
+
+
+                @* Inner  *@
+                <div id="inner-section">
+                    <div class="label-text">INNER Ø · d <span class="label-unit">mm</span></div>
+                    <div id="inner-range-inputs" class="range-input-group">
+                        <input type="number" class="input-field" id="inner-min" placeholder="From" step="0.001" min="0">
+                        <input type="number" class="input-field" id="inner-max" placeholder="To" step="0.001" min="0">
+                    </div>
+                    <div id="inner-exact-inputs" class="exact-input-group hidden">
+                        <input type="number" class="input-field" id="inner-exact" placeholder="Value" step="0.001" min="0">
+                    </div>
+                    <div class="toggle-group">
+                        <span onclick="toggleMode('inner','range')" id="inner-range-btn" class="toggle-link toggle-active">@T("Range")</span>
+                        <span onclick="toggleMode('inner','exact')" id="inner-exact-btn" class="toggle-link toggle-inactive">@T("Exact")</span>
+                    </div>
+                </div>
+
+
+                @* Outer  *@
+                <div id="outer-section">
+                    <div class="label-text">OUTER Ø · D <span class="label-unit">mm</span></div>
+                    <div id="outer-range-inputs" class="range-input-group">
+                        <input type="number" class="input-field" id="outer-min" placeholder="From" step="0.001" min="0">
+                        <input type="number" class="input-field" id="outer-max" placeholder="To" step="0.001" min="0">
+                    </div>
+                    <div id="outer-exact-inputs" class="exact-input-group hidden">
+                        <input type="number" class="input-field" id="outer-exact" placeholder="Value" step="0.001" min="0">
+                    </div>
+                    <div class="toggle-group">
+                        <span onclick="toggleMode('outer','range')" id="outer-range-btn" class="toggle-link toggle-active">@T("Range")</span>
+                        <span onclick="toggleMode('outer','exact')" id="outer-exact-btn" class="toggle-link toggle-inactive">@T("Exact")</span>
+                    </div>
+                </div>
+
+
+                @* Thickness  *@
+                <div id="thickness-section">
+                    <div class="label-text">THICKNESS · B <span class="label-unit">mm</span></div>
+                    <div id="thickness-range-inputs" class="range-input-group">
+                        <input type="number" class="input-field" id="thick-min" placeholder="From" step="0.001" min="0">
+                        <input type="number" class="input-field" id="thick-max" placeholder="To" step="0.001" min="0">
+                    </div>
+                    <div id="thickness-exact-inputs" class="exact-input-group hidden">
+                        <input type="number" class="input-field" id="thick-exact" placeholder="Value" step="0.001" min="0">
+                    </div>
+                    <div class="toggle-group">
+                        <span onclick="toggleMode('thickness','range')" id="thickness-range-btn" class="toggle-link toggle-active">@T("Range")</span>
+                        <span onclick="toggleMode('thickness','exact')" id="thickness-exact-btn" class="toggle-link toggle-inactive">@T("Exact")</span>
+                    </div>
+                </div>
+
+            </div>
+            @* /dimension-grid  *@
+
+
+            @* Footer  *@
+            <div class="dimension-footer">
+                <div class="info-text">
+                    <i class="fa-solid fa-ruler"></i>
+                    We match exact parts &amp; verified equivalents.
+                </div>
+                <button type="submit" class="search-btn">
+                    @T("Search by Dimensions")
+                </button>
+            </div>
+
+        </form>
+    </div>
+    @* /dimension panel  *@
+
+</div>
+@* /algolia-search-card  *@
+
+@await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.SearchBox })
+
+<script asp-location="Footer">
+    /* ── toggleMode: switches between Range and Exact inputs for each dimension ── */
+    function toggleMode(section, mode) {
+        var rangeDiv  = document.getElementById(section + '-range-inputs');
+        var exactDiv  = document.getElementById(section + '-exact-inputs');
+        var rangeBtn  = document.getElementById(section + '-range-btn');
+        var exactBtn  = document.getElementById(section + '-exact-btn');
+        if (mode === 'range') {
+            rangeDiv.classList.remove('hidden');
+            exactDiv.classList.add('hidden');
+            rangeBtn.className = 'toggle-link toggle-active';
+            exactBtn.className = 'toggle-link toggle-inactive';
+        } else {
+            rangeDiv.classList.add('hidden');
+            exactDiv.classList.remove('hidden');
+            rangeBtn.className = 'toggle-link toggle-inactive';
+            exactBtn.className = 'toggle-link toggle-active';
+        }
+    }
+
+    /* ── Dimension form helpers ── */
+    function isEmpty(v) { return v === null || v === undefined || ('' + v).trim() === ''; }
+    function toNum(v) {
+        if (isEmpty(v)) return null;
+        var x = parseFloat(('' + v).replace(',', '.'));
+        return isNaN(x) ? null : x;
+    }
+    function addRange(params, attr, fromVal, toVal) {
+        if (fromVal === null && toVal === null) return;
+        params.push('attr=' + encodeURIComponent(attr));
+        if (fromVal !== null) params.push('from=' + encodeURIComponent(fromVal));
+        if (toVal !== null)   params.push('to='   + encodeURIComponent(toVal));
+    }
+
+    $(document).ready(function () {
+
+        /* exact → copy to range inputs so the submit handler can always read range fields */
+        $('#inner-exact').on('input',  function () { var v=$(this).val(); $('#inner-min').val(v); $('#inner-max').val(v); });
+        $('#outer-exact').on('input',  function () { var v=$(this).val(); $('#outer-min').val(v); $('#outer-max').val(v); });
+        $('#thick-exact').on('input',  function () { var v=$(this).val(); $('#thick-min').val(v); $('#thick-max').val(v); });
+
+        /* dimension form submit */
+        $('#dimension-search-form').on('submit', function (e) {
+            e.preventDefault();
+            var actionUrl = $(this).attr('action');
+            var q = ($('#dimension-search-query').val() || '').trim();
+            var params = ['q=' + encodeURIComponent(q)];
+            var errors = [], hasAny = false;
+
+            var inFrom = toNum($('#inner-min').val()), inTo = toNum($('#inner-max').val());
+            if (inFrom !== null || inTo !== null) {
+                if (inFrom !== null && inTo !== null && inFrom > inTo) errors.push('InnerDiameter: From cannot be greater than To');
+                addRange(params, 'InnerDiameter', inFrom, inTo); hasAny = true;
+            }
+            var outFrom = toNum($('#outer-min').val()), outTo = toNum($('#outer-max').val());
+            if (outFrom !== null || outTo !== null) {
+                if (outFrom !== null && outTo !== null && outFrom > outTo) errors.push('OuterDiameter: From cannot be greater than To');
+                addRange(params, 'OuterDiameter', outFrom, outTo); hasAny = true;
+            }
+            var thFrom = toNum($('#thick-min').val()), thTo = toNum($('#thick-max').val());
+            if (thFrom !== null || thTo !== null) {
+                if (thFrom !== null && thTo !== null && thFrom > thTo) errors.push('Thickness: From cannot be greater than To');
+                addRange(params, 'Thickness', thFrom, thTo); hasAny = true;
+            }
+            if (errors.length) {
+                $('#dimension-messages').html(errors.map(function(x){ return '<div class="message error-message">'+x+'</div>'; }).join(''));
+                return false;
+            }
+            if (!hasAny) {
+                $('#dimension-messages').html('<div class="message error-message">Please enter at least one range.</div>');
+                return false;
+            }
+            window.location.href = actionUrl + '?' + params.join('&');
+        });
+
+        $('.dimension-input, .input-field[id^="inner-"], .input-field[id^="outer-"], .input-field[id^="thick-"]')
+            .on('keypress', function (e) {
+                if (e.which === 13) { e.preventDefault(); $('#dimension-search-form').submit(); }
+            });
+
+        /* restore q from URL on page load */
+        var searchValue = new URLSearchParams(window.location.search).get('q');
+        if (searchValue) $('#small-searchterms').val(decodeURIComponent(searchValue));
+    });
+</script>
+
+<script asp-location="Footer">
+    /* ── Algolia autocomplete ── */
+    function initAlgoliaAutocomplete() {
+        var $input = $('#small-searchterms');
+        if (!$input.length || $input.data('ac-init')) return;
+        $input.data('ac-init', true);
+
+        function safeText(x) { return (x === null || x === undefined) ? '' : ('' + x); }
+
+        autocomplete('#small-searchterms', {
+            hint: false,
+            minLength: @Model.SearchTermMinimumLength,
+            autoselect: true,
+            appendTo: 'body'
+        }, [{
+            source: function (query, callback) {
+                query = safeText(query).trim();
+                if (!query || query.length < @Model.SearchTermMinimumLength) { callback([]); return; }
+                $.ajax({ url: '@autoCompleteUrl', method: 'GET', dataType: 'json', data: { term: query, size: @Model.AutoCompleteListSize } })
+                    .done(function (res) { callback(res || []); })
+                    .fail(function () { callback([]); });
+            },
+            templates: {
+                suggestion: function (s) {
+                    var img = s.AutoCompleteImageUrl
+                        ? '<div class="item-image"><img src="' + s.AutoCompleteImageUrl + '" alt=""/></div>' : '';
+                    var manu = s.ManufacturerName
+                        ? '<div class="item-manufacturer">(' + safeText(s.ManufacturerName) + ')</div>' : '';
+                    var sub = s.IsSubstituteResult === true
+                        ? '<div class="item-substitute">(Substitute)</div>' : '';
+                    return '<div class="autocomplete-item">' + img +
+                        '<div class="item-details"><div class="item-name">' + safeText(s.Name) + '</div>' + manu + sub + '</div></div>';
+                },
+                empty: function (options) {
+                    var q = safeText(options && options.query ? options.query : $input.val()).trim();
+                    if (!q) return '<div class="no-result">No search result.</div>';
+                    var url = '@Url.RouteUrl("ProductSearch")';
+                    return '<div class="no-result"><div>No search result for "<strong>' + q + '</strong>".</div>' +
+                        '<div style="margin-top:8px"><a class="btn btn-primary" href="' + url + '?q=' + encodeURIComponent(q) + '">Search for "' + q + '"</a></div></div>';
+                }
+                @if (!Model.HidePoweredByAlgolia)
+                {
+                        <text>,footer: '<div class="search-footer">Powered by Algolia</div>'</text>
+                }
+            }
+        }]).on('autocomplete:selected', function (event, suggestion) {
+            if (suggestion && suggestion.Url) { window.location.href = suggestion.Url; return; }
+            if (suggestion && suggestion.Id)  { window.location.href = '@webHelper.GetStoreLocation()' + 'productdetails/' + suggestion.Id; }
+        });
+    }
+
+    /* ── Tab switching ── */
+    $(document).ready(function () {
+        // item tab is not the default, so don't init autocomplete yet
+
+        var $tabs  = $('.search-tab');
+        var $forms = $('.search-form');
+
+        $tabs.on('click', function (e) {
+            e.preventDefault(); e.stopPropagation();
+            var target = $(this).data('tab');
+            $tabs.removeClass('active');
+            $forms.removeClass('active').hide();
+            $(this).addClass('active');
+            $('.search-form[data-form="' + target + '"]').addClass('active').show();
+            if (target === 'item') { initAlgoliaAutocomplete(); $('#small-searchterms').focus(); }
+        });
+
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('.algolia-search-card').length) {
+                $tabs.removeClass('active');
+                $forms.removeClass('active').hide();
+                $('.search-tab[data-tab="dimension"]').addClass('active');
+                $('.search-form[data-form="dimension"]').addClass('active').show();
+                initAlgoliaAutocomplete();
+            }
+        });
+    });
+</script>

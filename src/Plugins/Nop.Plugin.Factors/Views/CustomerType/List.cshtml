@@ -1,0 +1,197 @@
+﻿@model CustomerTypeSearchModel
+@using Nop.Web.Framework.Models.DataTables
+
+@{
+    Layout = "_AdminLayout";
+    ViewBag.PageTitle = "Customer Type";
+    NopHtml.SetActiveMenuItemSystemName("Customer Type Factors");
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">
+        @T("Plugins.Factors.CustomerType.PageTitle")
+    </h1>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="form-horizontal">
+            <div class="cards-group">
+                <div class="card card-default">
+                    <div class="card-body">
+                        
+                    </div>
+                </div>
+
+                <div class="card card-default">
+                    <div class="card-body">
+                        <div id="customertypefactors-area">
+                            @await Html.PartialAsync("Table", new DataTablesModel
+                            {
+                                Name = "customertypefactors-grid",
+                                                        UrlRead = new DataUrl("List", "CustomerType", null),
+                                                        SearchButtonId = "search-customertypes",
+                                                        Length = Model.PageSize,
+                                                        LengthMenu = Model.AvailablePageSizes,
+                                                        
+                                                        ColumnCollection = new List<ColumnProperty>
+                                                        {
+                                                        new ColumnProperty(nameof(CustomerTypeModel.Id))
+                                                        {
+                                                        Title = "ID",
+                                                        Width = "50",
+                                                        Visible = false
+                                                        },
+                                                        new ColumnProperty(nameof(CustomerTypeModel.TypeName))
+                                                        {
+                                                        Title = T("Plugins.Factors.Fields.TypeName").Text,
+                                                        Width = "200"
+                                                        },
+                                                        new ColumnProperty(nameof(CustomerTypeModel.Factor))
+                                                        {
+                                                        Title = T("Plugins.Factors.Fields.Factor").Text,
+                                                        Width = "150",
+                                                        ClassName = NopColumnClassDefaults.CenterAll,
+                                                        Render = new RenderCustom("renderFactorEdit")
+                                                        },
+                                                        new ColumnProperty(nameof(CustomerTypeModel.Id))
+                                                        {
+                                                        Title = T("Admin.Common.Actions").Text,
+                                                        Width = "150",
+                                                        ClassName = NopColumnClassDefaults.Button,
+                                                        Render = new RenderCustom("renderFactorActions")
+                                                        }
+                                                        }
+                                                        })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function renderFactorEdit(data, type, row, meta) {
+        return `
+            <div class="factor-edit-container" data-id="${row.Id}">
+                <span class="factor-display">${parseFloat(row.Factor).toFixed(4)}</span>
+                <div class="factor-edit-form" style="display: none;">
+                    <input type="number" step="0.0001"  max="999999.9999"
+                           class="form-control form-control-sm factor-input"
+                           value="${parseFloat(row.Factor).toFixed(4)}" />
+                    <div class="btn-group mt-1">
+                        <button type="button" class="btn btn-success btn-sm factor-save">
+                            <i class="fas fa-check"></i> @T("Admin.Common.Save")
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm factor-cancel">
+                            <i class="fas fa-times"></i> @T("Admin.Common.Cancel")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderFactorActions(data, type, row, meta) {
+        return `
+            <div class="btn-group">
+                <button type="button" class="btn btn-default btn-sm edit-factor" data-id="${row.Id}">
+                    <i class="fas fa-pencil-alt"></i> @T("Admin.Common.Edit")
+                </button>
+            </div>
+        `;
+    }
+
+    $(document).ready(function () {
+        var token = $('input[name="__RequestVerificationToken"]').val();
+
+        // Edit factor inline
+        $(document).on('click', '.edit-factor', function () {
+            var id = $(this).data('id');
+            var container = $(`[data-id="${id}"]`);
+
+            container.find('.factor-display').hide();
+            container.find('.factor-edit-form').show();
+            container.find('.factor-input').focus().select();
+        });
+
+        // Cancel edit
+        $(document).on('click', '.factor-cancel', function () {
+            var container = $(this).closest('.factor-edit-container');
+            var originalValue = container.find('.factor-display').text();
+            container.find('.factor-input').val(originalValue);
+            container.find('.factor-edit-form').hide();
+            container.find('.factor-display').show();
+        });
+
+        // Save factor
+        $(document).on('click', '.factor-save', function () {
+            var container = $(this).closest('.factor-edit-container');
+            var id = container.data('id');
+            var newValue = parseFloat(container.find('.factor-input').val());
+            var displaySpan = container.find('.factor-display');
+
+            if (isNaN(newValue) ||  newValue > 999999.9999) {
+                alert('@T("Plugins.Factors.Validation.FactorRange")');
+                return;
+            }
+
+            var saveBtn = $(this);
+            var originalText = saveBtn.html();
+            saveBtn.html('<i class="fas fa-spinner fa-spin"></i> @T("Admin.Common.Saving")').prop('disabled', true);
+
+            $.ajax({
+                url: '@Url.Action("UpdateFactor", "CustomerType")',
+                type: 'POST',
+                data: {
+                    id: id,
+                    factor: newValue,
+                    __RequestVerificationToken: token
+                },
+                success: function (response) {
+                    if (response.success) {
+                        displaySpan.text(newValue.toFixed(4));
+                        container.find('.factor-edit-form').hide();
+                        container.find('.factor-display').show();
+                        showAlert(response.message || 'Factor updated successfully', 'success');
+                    } else {
+                        showAlert(response.message || 'Error updating factor', 'error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    showAlert('Error updating factor: ' + error, 'error');
+                },
+                complete: function () {
+                    saveBtn.html(originalText).prop('disabled', false);
+                }
+            });
+        });
+
+        // Handle Enter key in factor input
+        $(document).on('keypress', '.factor-input', function (e) {
+            if (e.which === 13) { // Enter key
+                $(this).closest('.factor-edit-form').find('.factor-save').click();
+            }
+        });
+
+        // Handle Escape key in factor input
+        $(document).on('keydown', '.factor-input', function (e) {
+            if (e.which === 27) { // Escape key
+                $(this).closest('.factor-edit-form').find('.factor-cancel').click();
+            }
+        });
+
+        function showAlert(message, type) {
+            // Use NopCommerce notification system
+            if (typeof displayPopupNotification === 'function') {
+                displayPopupNotification(message, type === 'success' ? 'success' : 'error');
+            } else {
+                // Fallback to simple alert
+                alert(message);
+            }
+        }
+    });
+</script>
+
+<nop-alert asp-alert-id="updateFactorAlert" />

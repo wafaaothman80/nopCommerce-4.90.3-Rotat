@@ -1,0 +1,126 @@
+@model string
+<script>
+(function () {
+    var discountLabel = 'Shipment Consolidation Discount';
+    var amountEndpoint = '/shipmentmergediscount/getamount';
+
+    // Expose state for debugging
+    window._smd = window._smd || { cachedAmount: null, injectCount: 0, lastFound: null };
+
+    function removeRow() {
+        document.querySelectorAll('tr.shipment-merge-discount').forEach(function (el) {
+            el.parentNode.removeChild(el);
+        });
+    }
+
+    function injectCached() {
+        var shippingRow = document.querySelector('tr.shipping-cost');
+        window._smd.lastFound = shippingRow ? 'found' : 'NOT FOUND';
+
+        if (!shippingRow) return;
+
+        var next = shippingRow.nextElementSibling;
+        if (next && next.classList.contains('shipment-merge-discount')) {
+            if (!window._smd.cachedAmount) removeRow();
+            return;
+        }
+
+        removeRow();
+        if (!window._smd.cachedAmount) return;
+
+        var tr = document.createElement('tr');
+        tr.className = 'shipment-merge-discount';
+        tr.innerHTML =
+            '<td class="cart-total-left"><label>' + discountLabel + ':</label></td>' +
+            '<td class="cart-total-right"><span class="value-summary" style="color:#2a9d2a;">-' +
+                window._smd.cachedAmount + '</span></td>';
+        shippingRow.insertAdjacentElement('afterend', tr);
+        window._smd.injectCount++;
+    }
+
+    function scheduleInject() {
+        clearTimeout(window._smd._debounce);
+        window._smd._debounce = setTimeout(injectCached, 100);
+    }
+
+    function parseAmount(str) {
+        if (!str) return 0;
+        var n = parseFloat(str.replace(/[^0-9.]/g, ''));
+        return isNaN(n) ? 0 : n;
+    }
+
+    function fetchAndInject() {
+        fetch(amountEndpoint, { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var newAmount = (data && data.amount) ? data.amount : null;
+                var newVal = parseAmount(newAmount);
+                var curVal = parseAmount(window._smd.cachedAmount);
+
+                // Only update if the new value is strictly larger than what we already have.
+                // ROPC writes stale/corrupt values to SelectedShippingOptionAttribute during
+                // its AJAX initialisation, causing later fetches to return a wrong small amount.
+                // The initial fetch (before ROPC fires) always returns the correct value, so
+                // we lock it in and refuse to let subsequent fetches replace it with less.
+                if (newVal > curVal) {
+                    window._smd.cachedAmount = newAmount;
+                    injectCached();
+                } else if (!window._smd.cachedAmount && !newAmount) {
+                    injectCached(); // both null/zero — clear any stale row
+                }
+            })
+            .catch(function () {});
+    }
+
+    // Expose manually callable functions for debugging
+    window._smd.fetch = fetchAndInject;
+    window._smd.inject = injectCached;
+
+    // MutationObserver
+    var observer = new MutationObserver(scheduleInject);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // setInterval fallback
+    setInterval(injectCached, 500);
+
+    // XHR intercept: debounce fetches so we only call /getamount after ALL ROPC AJAX
+    // activity has settled (1500 ms quiet window). ROPC fires multiple XHRs in sequence
+    // (get shipping options → get order total). Fetching after each one individually risks
+    // reading stale data; waiting for the quiet window ensures GetShoppingCartTotalAsync
+    // has already run and written the authoritative DisplayAmount attribute.
+    var _fetchDebounce = null;
+    function scheduleFetch() {
+        clearTimeout(_fetchDebounce);
+        _fetchDebounce = setTimeout(fetchAndInject, 1500);
+    }
+    window._smd.scheduleFetch = scheduleFetch;
+
+    (function () {
+        var origOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function () {
+            this.addEventListener('loadend', scheduleFetch);
+            origOpen.apply(this, arguments);
+        };
+    })();
+
+    // Also intercept fetch() API used by some Angular versions / newer ROPC builds.
+    (function () {
+        var origFetch = window.fetch;
+        if (origFetch) {
+            window.fetch = function () {
+                var p = origFetch.apply(this, arguments);
+                p.then(scheduleFetch, scheduleFetch);
+                return p;
+            };
+        }
+    })();
+
+    // Initial fetch — runs immediately on page load (server-side render already set
+    // DisplayAmount, so this gives the correct value without waiting for ROPC).
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fetchAndInject);
+    } else {
+        fetchAndInject();
+    }
+})();
+</script>

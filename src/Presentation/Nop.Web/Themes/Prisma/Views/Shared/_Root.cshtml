@@ -1,0 +1,737 @@
+﻿@using Nop.Core
+@using Nop.Services.Configuration
+@using Nop.Services.Security
+@using Nop.Services.Orders
+@using Nop.Core.Domain.Orders
+
+@inject IStoreContext storeContext
+@inject IWorkContext workContext
+@inject ISettingService settingService
+@inject IPermissionService permissionService
+@inject ShoppingCartSettings shoppingCartSettings
+@inject IShoppingCartService shoppingCartService
+
+@{
+    Layout = "_Root.Head";
+
+    var storeId = (await storeContext.GetCurrentStoreAsync()).Id;
+
+    var controllerName = Url.ActionContext.RouteData.Values["controller"].ToString();
+    var isHomePage = controllerName.Equals("home", StringComparison.InvariantCultureIgnoreCase);
+
+    var customer = await workContext.GetCurrentCustomerAsync();
+    int shoppingCartItems = 0;
+    int wishlistItems = 0;
+
+    if (customer.HasShoppingCartItems)
+    {
+        shoppingCartItems = (await shoppingCartService.GetShoppingCartAsync(await workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart, (await storeContext.GetCurrentStoreAsync()).Id))
+                          .Sum(item => item.Quantity);
+
+        wishlistItems = (await shoppingCartService.GetShoppingCartAsync(await workContext.GetCurrentCustomerAsync(), ShoppingCartType.Wishlist, (await storeContext.GetCurrentStoreAsync()).Id))
+                          .Sum(item => item.Quantity);
+    }
+
+    var shoppingCartEnabled = await permissionService.AuthorizeAsync(StandardPermission.PublicStore.ENABLE_SHOPPING_CART);
+    var wishlistEnabled = await permissionService.AuthorizeAsync(StandardPermission.PublicStore.ENABLE_WISHLIST);
+
+    string sliderType = await settingService.GetSettingByKeyAsync("prismathemesettings.slidertype", "full-width-slider", storeId, true);
+}
+
+@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.BodyStartHtmlTagAfter })
+@{ await Html.RenderPartialAsync("_Notifications"); }
+@{ await Html.RenderPartialAsync("_JavaScriptDisabledWarning"); }
+<style>
+
+    .header-menu > ul {
+    width: auto !important;
+}
+
+.header-menu {
+    background-color: transparent !important;
+}
+    *:before {
+        font-family: 'prisma', "Font Awesome 6 Free" !important;
+    }
+    .algolia-search-card button.button-1.search-btn {
+        border-radius: 20px !important;
+        margin: 0px 8px;
+    }
+
+    .algolia-search-card {
+        height: 316px;
+    }
+
+    body form#dimension-search-form button.search-btn {
+        color: white !important;
+    }
+    .header-links-wrapper.ps-container.ps-active-y.active.opened * {
+        color: black;
+    }
+</style>
+<div class="master-wrapper-page">
+    <div class="master-header-wrapper-parent">
+        <div class="master-header-wrapper">
+            @await Component.InvokeAsync(typeof(AdminHeaderLinksViewComponent))
+            <div class="header-wrapper" style="display:none">
+                @{ await Html.RenderPartialAsync("_Header"); }
+                <div class="responsive-nav-wrapper-parent">
+                    <div class="responsive-nav-wrapper">
+                        <div class="menu-title">
+                            <span>@T("SevenSpikes.Themes.Common.MenuTitle")</span>
+                        </div>
+                        <div class="search-wrap">
+                            <span>@T("Search")</span>
+                        </div>
+                        <div class="personal-button" id="header-links-opener">
+                            <span>@T("SevenSpikes.Themes.Common.Personal")</span>
+                        </div>
+                        @if (wishlistEnabled)
+                        {
+                            <div class="wishlist-button">
+                                <a href="@Url.RouteUrl("Wishlist")" class="ico-wishlist">
+                                    <span class="wishlist-label">@T("Wishlist")</span>
+                                    <span class="wishlist-qty">@T("Wishlist.HeaderQuantity", wishlistItems)</span>
+                                </a>
+                            </div>
+                        }
+                        @if (shoppingCartEnabled)
+                        {
+                            <div class="shopping-cart-link">
+                                <a href="@Url.RouteUrl("ShoppingCart")">@T("ShoppingCart")</a>
+                                <span class="cart-qty">@T("ShoppingCart.HeaderQuantity", shoppingCartItems)</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Bar -->
+            <div class="bg-[#1a237e] text-white text-[10px] py-1 px-4 flex justify-between items-center border-b border-white/10">
+                <div class="flex gap-4">
+                    <span>B2B parts platform for bearings, automotive, agriculture & industrial parts</span>
+                    <span>+971 4 886 5100</span>
+                </div>
+                <div class="flex gap-4 justify-between items-center">
+                    <span>Track order</span>
+                    <span class="font-bold">
+
+                        @await Component.InvokeAsync(typeof(LanguageSelectorViewComponent))@*|@await Component.InvokeAsync(typeof(CurrencySelectorViewComponent))*@
+                    </span>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <header class="bg-[#1a237e] text-white py-4 px-8 flex justify-between items-center sticky top-0 z-50">
+                <div class="flex items-center gap-8">
+                    <div class="text-2xl font-bold tracking-tighter flex items-center">
+                        @*<div class="w-6 h-6 border-4 border-yellow-400 rounded-full mr-2"></div>*@
+                        @await Component.InvokeAsync(typeof(LogoViewComponent))
+                    </div>
+                    <nav class=" md:flex gap-6 text-sm font-medium">
+                          <div class="overlayOffCanvas"></div> 
+   <div class="header-menu">
+       <div class="navigation-wrapper">
+           <div class="close-menu">
+               <span>@T("SevenSpikes.Themes.Common.CloseMenu")</span>
+           </div>
+       </div>
+       @{
+           var menuHtml = await Component.InvokeAsync("Widget", new { widgetZone = "theme_header_menu" });
+       }
+       @if (!String.IsNullOrEmpty(await menuHtml.RenderHtmlContentAsync()))
+       {
+           @menuHtml
+       }
+       else
+       {
+           @await Component.InvokeAsync(typeof(MainMenuViewComponent))
+       }
+   </div>
+                    </nav>
+                </div>
+                <div class="flex items-center gap-6 text-sm">
+                    <div class="responsive-nav-wrapper-parent">
+                        <div class="responsive-nav-wrapper">
+                            <div class="menu-title">
+                                <span>@T("SevenSpikes.Themes.Common.MenuTitle")</span>
+                            </div>
+                            <div class="search-wrap">
+                                <span>@T("Search")</span>
+                            </div>
+                            <div class="personal-button" id="header-links-opener">
+                                <span>@T("SevenSpikes.Themes.Common.Personal")</span>
+                            </div>
+                            @if (wishlistEnabled)
+                            {
+                                <div class="wishlist-button">
+                                    <a href="@Url.RouteUrl("Wishlist")" class="ico-wishlist">
+                                        <span class="wishlist-label">@T("Wishlist")</span>
+                                        <span class="wishlist-qty">@T("Wishlist.HeaderQuantity", wishlistItems)</span>
+                                    </a>
+                                </div>
+                            }
+                            @if (shoppingCartEnabled)
+                            {
+                                <div class="shopping-cart-link">
+                                    <a href="@Url.RouteUrl("ShoppingCart")">@T("ShoppingCart")</a>
+                                    <span class="cart-qty">@T("ShoppingCart.HeaderQuantity", shoppingCartItems)</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <button onclick="window.location.href='/customer/quoterequests'"
+                            class="bg-yellow-400 text-[#1a237e] px-4 py-2 rounded-full font-bold text-xs hover:bg-yellow-300 transition">
+                        Request a quote
+                    </button>                </div>
+            </header>
+
+        </div>
+     
+    </div>
+    @if (isHomePage)
+    {
+        if (sliderType == "full-width-slider")
+        {
+            @await Component.InvokeAsync("Widget", new { widgetZone = "home_page_main_slider" })
+        }
+        else if (sliderType == "standard-slider")
+        {
+            <div class="home-page-top-banner-wrapper">
+                <div class="slider-left">
+                    @await Component.InvokeAsync("Widget", new { widgetZone = "home_page_main_slider" })
+                </div>
+                <div class="banners-right">
+                    <div>@await Component.InvokeAsync("Widget", new { widgetZone = "home_page_right_banner_1" })</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="slider-gallery">
+                @await Component.InvokeAsync("Widget", new { widgetZone = "home_page_main_slider" })
+            </div>
+        }
+    }
+    <div class="master-wrapper-content" id="main" role="main">
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.ContentBefore })
+        @await Component.InvokeAsync("Widget", new { widgetZone = "prisma_color_squares" })
+        <div class="master-column-wrapper">
+            @RenderBody()
+        </div>
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.ContentAfter })
+    </div>
+    @await Component.InvokeAsync(typeof(FooterViewComponent))
+    <div class="filter-options">
+        <div class="filters-button">
+            <span>@T("SevenSpikes.Themes.Common.Filters")</span>
+        </div>
+        <div class="product-sorting-mobile">
+            Sort
+        </div>
+        <div class="product-display-mobile">
+            display
+        </div>
+    </div>
+</div>
+@await Component.InvokeAsync(typeof(EuCookieLawViewComponent))
+@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.BodyEndHtmlTagBefore })
+<script>
+    $(document).ready(function () {
+        $('#langToggle').click(function () {
+            $('#languageSelector').toggle();
+        });
+    });
+
+</script>
+<script>
+    $(document).ready(function () {
+        $(".custom-list > li").hover(
+            function () {
+                $(this).find(".CatSubCategories").stop(true, true).fadeIn(200).css("display", "grid");
+            },
+            function () {
+                $(this).find(".CatSubCategories").stop(true, true).fadeOut(200); 
+            }
+        );
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        // دالة لتحديث ارتفاع السلايدر
+        function updateSliderHeight() {
+            if (window.innerWidth > 1200) {
+                var sliderHeight = $('.catmenu').outerHeight();
+                $('.slidehome .slider-wrapper img').css('height', sliderHeight + 'px');
+            } else {
+                // إعادة تعيين الارتفاع إذا كانت الشاشة أصغر من 1200
+                $('.slidehome .slider-wrapper img').css('height', 'auto');
+            }
+        }
+
+        // استدعاء الدالة عند تحميل الصفحة
+        updateSliderHeight();
+
+        // استدعاء الدالة عند تغيير أبعاد الصفحة
+        $(window).resize(function () {
+            updateSliderHeight();
+        });
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        var wishlistIdsCache = {};
+        var wishlistMetaCache = {};
+        var refreshTimer = null;
+        var isRefreshing = false;
+
+        function getWishlistUrl() {
+            var $link = $('.wishlist-button a.ico-wishlist, .header-links a.ico-wishlist').first();
+            return $link.attr('href') || '/wishlist';
+        }
+
+        function extractProductIdFromButton($btn) {
+            var id = 0;
+
+            id = parseInt($btn.data('productid'), 10) || 0;
+            if (id) return id;
+
+            var btnId = $btn.attr('id') || '';
+            var match = btnId.match(/(\d+)/);
+            if (match) return parseInt(match[1], 10) || 0;
+
+            var onclick = $btn.attr('onclick') || '';
+            match = onclick.match(/['"](\d+)['"]/);
+            if (match) return parseInt(match[1], 10) || 0;
+
+            match = onclick.match(/\/details\/(\d+)\//i);
+            if (match) return parseInt(match[1], 10) || 0;
+
+            match = onclick.match(/\/(\d+)\/2/i);
+            if (match) return parseInt(match[1], 10) || 0;
+
+            return 0;
+        }
+
+        function normalizeUrl(url) {
+            if (!url) return '';
+            var a = document.createElement('a');
+            a.href = url;
+            return (a.pathname || '').toLowerCase().replace(/\/+$/, '');
+        }
+
+        function extractWishlistState(html) {
+            var ids = {};
+            var meta = {};
+            var $html = $('<div>').html(html);
+
+            $html.find('tr, .item, .wishlist-item, .product').each(function () {
+                var $row = $(this);
+                var productId = 0;
+
+                $row.find('a[href]').each(function () {
+                    var href = $(this).attr('href') || '';
+                    var path = normalizeUrl(href);
+                    var match = path.match(/-(\d+)$/);
+                    if (match) {
+                        productId = parseInt(match[1], 10) || 0;
+                        return false;
+                    }
+                });
+
+                if (!productId) {
+                    $row.find('.add-to-wishlist-button, button[id*="add-to-wishlist"], button[id*="add-wishlist"]').each(function () {
+                        productId = extractProductIdFromButton($(this));
+                        if (productId) return false;
+                    });
+                }
+
+                if (!productId) return;
+
+                ids[productId] = true;
+
+                var $remove = $row.find('input[type="checkbox"][name*="removefromcart"]').first();
+                if (!$remove.length) {
+                    $remove = $row.find('input[type="checkbox"][name*="remove"]').first();
+                }
+
+                meta[productId] = {
+                    removeName: $remove.attr('name') || '',
+                    removeValue: $remove.val() || 'true'
+                };
+            });
+
+            return {
+                ids: ids,
+                meta: meta
+            };
+        }
+
+        function markButtons() {
+            $('.add-to-wishlist-button').each(function () {
+                var $btn = $(this);
+                var productId = extractProductIdFromButton($btn);
+                $btn.toggleClass('Active', !!wishlistIdsCache[productId]);
+            });
+        }
+
+        function refreshWishlistButtons(delay) {
+            clearTimeout(refreshTimer);
+
+            refreshTimer = setTimeout(function () {
+                if (isRefreshing) return;
+                isRefreshing = true;
+
+                $.ajax({
+                    url: getWishlistUrl(),
+                    type: 'GET',
+                    cache: false,
+                    success: function (html) {
+                        var state = extractWishlistState(html);
+                        wishlistIdsCache = state.ids || {};
+                        wishlistMetaCache = state.meta || {};
+                        markButtons();
+                    },
+                    complete: function () {
+                        isRefreshing = false;
+                    }
+                });
+            }, delay || 0);
+        }
+
+        function addProductToWishlist($btn) {
+            var onclick = $btn.attr('onclick') || '';
+
+            if (onclick) {
+                try {
+                    new Function(onclick.replace(/^return\s+/i, ''))();
+                } catch (e) {
+                    $btn[0].click();
+                }
+            } else {
+                $btn.trigger('click');
+            }
+
+            var productId = extractProductIdFromButton($btn);
+            if (productId) {
+                wishlistIdsCache[productId] = true;
+                $btn.addClass('Active');
+            }
+
+            refreshWishlistButtons(800);
+        }
+
+        function removeProductFromWishlist($btn, productId) {
+            $.ajax({
+                url: getWishlistUrl(),
+                type: 'GET',
+                cache: false,
+                success: function (html) {
+                    var $page = $('<div>').html(html);
+                    var state = extractWishlistState(html);
+
+                    wishlistIdsCache = state.ids || {};
+                    wishlistMetaCache = state.meta || {};
+
+                    var meta = wishlistMetaCache[productId];
+                    var $form = $page.find('form').first();
+
+                    if (!$form.length || !meta || !meta.removeName) {
+                        delete wishlistIdsCache[productId];
+                        $btn.removeClass('Active');
+                        markButtons();
+                        refreshWishlistButtons(300);
+                        return;
+                    }
+
+                    var formAction = $form.attr('action') || getWishlistUrl();
+                    var formMethod = ($form.attr('method') || 'post').toUpperCase();
+                    var data = {};
+
+                    $form.find('input, select, textarea').each(function () {
+                        var $field = $(this);
+                        var name = $field.attr('name');
+                        if (!name) return;
+
+                        var type = ($field.attr('type') || '').toLowerCase();
+
+                        if (type === 'checkbox' || type === 'radio') {
+                            if ($field.prop('checked')) {
+                                data[name] = $field.val() || 'on';
+                            }
+                        } else {
+                            data[name] = $field.val();
+                        }
+                    });
+
+                    data[meta.removeName] = meta.removeValue || 'true';
+
+                    if (!data.updatecart) data.updatecart = 'Update wishlist';
+
+                    $.ajax({
+                        url: formAction,
+                        type: formMethod,
+                        data: data,
+                        success: function () {
+                            delete wishlistIdsCache[productId];
+                            $btn.removeClass('Active');
+                            markButtons();
+                            refreshWishlistButtons(400);
+                        },
+                        error: function () {
+                            refreshWishlistButtons(400);
+                        }
+                    });
+                },
+                error: function () {
+                    refreshWishlistButtons(400);
+                }
+            });
+        }
+
+        refreshWishlistButtons(0);
+
+        $(document).on('click.wishlistToggle', '.add-to-wishlist-button', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            var $btn = $(this);
+            var productId = extractProductIdFromButton($btn);
+
+            if (!productId) return false;
+
+            if ($btn.hasClass('Active') || wishlistIdsCache[productId]) {
+                removeProductFromWishlist($btn, productId);
+            } else {
+                addProductToWishlist($btn);
+            }
+
+            return false;
+        });
+
+        $(document).ajaxComplete(function (event, xhr, settings) {
+            var url = (settings && settings.url) ? settings.url.toLowerCase() : '';
+
+            if (url.indexOf('wishlist') !== -1 ||
+                url.indexOf('addproducttocart') !== -1 ||
+                url.indexOf('removefromcart') !== -1) {
+                refreshWishlistButtons(250);
+            }
+        });
+    });
+</script>
+
+
+@*<script asp-location="Footer">
+    let lastWindowWidth = window.innerWidth;
+    let resizeTimer;
+
+    function initSlider($slider, options) {
+        if (window.innerWidth >= 992) {
+            if (!$slider.hasClass('slick-initialized')) {
+                $slider.slick(options);
+            }
+        } else {
+            if ($slider.hasClass('slick-initialized')) {
+                $slider.slick('unslick');
+            }
+        }
+    }
+
+    function initAllSliders() {
+
+        initSlider($('.catagoei .item-grid'), {
+            rows: 2,
+            slidesPerRow: 6,
+            dots: true,
+            arrows: false,
+            infinite: true,
+            speed: 300,
+            autoplay: true,
+            autoplaySpeed: 2000,
+            pauseOnHover: true
+        });
+
+        initSlider($('.brand .item-grid'), {
+            rows: 2,
+            slidesPerRow: 5,
+            dots: true,
+            arrows: false,
+            infinite: true,
+            speed: 300,
+            autoplay: true,
+            autoplaySpeed: 2000,
+            pauseOnHover: true
+        });
+    }
+
+    // أول تحميل
+    $(document).ready(function () {
+        initAllSliders();
+    });
+
+    // AJAX (مرة واحدة بعد انتهاء أي تحميل حقيقي)
+    $(document).ajaxComplete(function () {
+        initAllSliders();
+    });
+
+    // resize مع debounce
+    $(window).on('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+            if (window.innerWidth !== lastWindowWidth) {
+                lastWindowWidth = window.innerWidth;
+                initAllSliders();
+            }
+        },1000);
+    });
+</script>*@
+ <script>
+        $(document).on('keydown', '#small-searchterms', function (e) {
+    if (e.key === 'Enter' || e.keyCode === 13) {
+            e.preventDefault(); // يمنع أي سلوك افتراضي
+        $('button.button-1.search-box-button').trigger('click');
+    }
+});
+</script>
+
+<script>
+$(document).ready(function () {
+
+    function hideZeroPrices() {
+        $(".product-unit-price, .product-subtotal, .value-summary, .price span, .totals strong, .price, .product-subtotal, .product-price span")
+            .each(function () {
+
+                var text = $(this).text().trim();
+
+                // نشيل أي رموز عملة ومسافات
+                var cleanText = text.replace(/[^\d\.٫]/g, '');
+
+                // نخفي فقط لو القيمة صفر فعلاً
+                if (
+                    cleanText === "0" ||
+                    cleanText === "00" ||
+                    cleanText === "0.00" ||
+                    cleanText === "0٫00"
+                ) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
+    }
+
+    // أول تحميل
+    hideZeroPrices();
+
+    // إعادة الفحص كل 50 ثانية
+    setInterval(hideZeroPrices, 50000);
+});
+</script>
+<script>
+$(document).ready(function () {
+    $('.description.gram.Weight').each(function () {
+        var text = $(this).text().trim();
+
+        // صفر فقط بكل أشكاله
+        if (/^0+(\.0+)?$/.test(text)) {
+            $(this).css('visibility', 'hidden');
+        }
+    });
+});
+</script>
+
+@*للسرش*@ 
+<script>
+$(document).ready(function () {
+
+    var $searchBox = $('.store-search-box.newheader');
+    var $originalParent = $searchBox.parent(); // المكان الأصلي
+    var $originalNext = $searchBox.next();     // العنصر اللي بعده
+
+    function moveSearchBox() {
+        var $headerWrapper = $('.header-wrapper');
+
+        if ($(window).width() <= 1200) {
+            // للموبايل
+            if ($searchBox.length && $headerWrapper.length) {
+                if (!$searchBox.prev().is($headerWrapper)) {
+                    $searchBox.insertAfter($headerWrapper);
+                }
+            }
+        } else {
+            // للديسكتوب (رجّعيه مكانه)
+            if ($originalNext.length) {
+                $searchBox.insertBefore($originalNext);
+            } else {
+                $searchBox.appendTo($originalParent);
+            }
+        }
+    }
+
+    // أول تحميل
+    moveSearchBox();
+
+    // عند تغيير الحجم
+    $(window).on('resize', function () {
+        moveSearchBox();
+    });
+
+});
+</script>
+
+<script>
+$(document).ready(function () {
+    $('table.data-table td.spec-value').each(function () {
+        var value = $(this).text().trim();
+
+        // أي قيمة = صفر (0 / 00 / 0.0 / 0.00)
+        if (/^0+(\.0+)?$/.test(value)) {
+            $(this).closest('tr').css({
+                'display': 'none'
+            });
+        }
+    });
+});
+</script>
+
+<script>
+    document.querySelectorAll('table.data-table .spec-value').forEach(function (el) {
+    el.innerHTML = el.innerHTML.replace(/\d+\.\d+/g, function (num) {
+        return num.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    });
+});
+</script>
+
+
+
+<script>
+    // تحديد اتجاه الصفحة تلقائيًا
+    var isRtl = $('html').attr('dir') === 'rtl';
+
+    $('.home-page-desktop-gridh').slick({
+        rows: 2,
+        slidesToShow: 5,
+        slidesToScroll: 5,
+        infinite: false,
+        arrows: true,
+        dots: false,
+        rtl: isRtl, // يشتغل حسب اتجاه الصفحة
+        responsive: [
+            {
+                breakpoint: 1200,
+                settings: {
+                    slidesToShow: 5,
+                    slidesToScroll: 5
+                }
+            },
+            {
+                breakpoint: 768,
+                settings: {
+                    slidesToShow: 2,
+                    slidesToScroll: 2
+                }
+            }
+        ]
+    });
+</script>

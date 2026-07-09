@@ -1,0 +1,362 @@
+﻿@{
+    Layout = "_ColumnsTwo";
+
+    //title
+    NopHtml.AddTitleParts(T("PageTitle.Account").Text);
+    //page class
+    NopHtml.AppendPageCssClassParts("html-account-page");
+    NopHtml.AppendPageCssClassParts("html-customer-info-page");
+}
+
+@section left
+{
+    @await Component.InvokeAsync(typeof(CustomerNavigationViewComponent), new { selectedTabId = CustomerNavigationEnum.Info })
+}
+
+<style>
+    button.Creadit {
+        background: #1f278a;
+        color: #fff;
+        padding: 12px 25px;
+        border: 0;
+        cursor: pointer;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        transition: .3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 30px;
+    }
+
+    .invoice-wrapper {
+        max-width: 1000px;
+        margin: auto;
+        background: #fff;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        margin-top: 20px;
+    }
+
+    .title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: #222;
+    }
+
+    .desc {
+        color: #777;
+        line-height: 1.7;
+        margin-bottom: 25px;
+    }
+
+    .credit-box {
+        margin-bottom: 35px;
+    }
+
+    .credit-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .progress {
+        width: 100%;
+        height: 14px;
+        background: #e5e5e5;
+        border-radius: 50px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        width: 82%;
+        height: 100%;
+        background: #4CAF50;
+    }
+
+    .credit-info {
+        margin-top: 10px;
+        color: #555;
+        font-size: 14px;
+    }
+
+    /* Tabs */
+
+    .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 15px;
+    }
+
+    .tab-btn {
+        padding: 12px 25px;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+
+        .tab-btn.active {
+            background: #1f278a;
+            color: #fff;
+        }
+
+    .invoice-list {
+        display: none;
+    }
+
+        .invoice-list.active {
+            display: block;
+        }
+
+    /* Invoice Card */
+
+    .invoice-card {
+        border: 1px solid #eee;
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .invoice-left h3 {
+        font-size: 18px;
+        margin-bottom: 8px;
+        color: #222;
+    }
+
+    .invoice-left p {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .status-btn {
+        border: none;
+        padding: 12px 22px;
+        border-radius: 50px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .paid {
+        background: #2eaf4a;
+    }
+
+    .unpaid {
+        background: #e53935;
+    }
+
+    @@media(max-width:768px) {
+
+        .invoice-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .status-btn {
+            width: 100%;
+        }
+
+        .title {
+            font-size: 26px;
+        }
+    }
+
+    .tab-btn {
+        padding: 12px 25px;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .count {
+        min-width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #e5e5e5;
+        color: #111;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .tab-btn.active .count {
+        background: #fff;
+        color: #111;
+    }
+</style>
+
+<div class="invoice-wrapper">
+
+    <h1 class="title">My Invoices</h1>
+
+    <p class="desc">
+        Would you like to increase your credit limit?
+        Contact the sales department. Your request will be reviewed based on external credit checks.
+    </p>
+    @*<button class="Creadit" > add Creadit </button>*@
+    <div class="credit-box">
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+        @*<div class="credit-info">
+                Available <span id="remainingAmount">0</span> of <span id="totalAmount">0</span>
+            </div>*@
+        <p>Available: <span id="usedAmount">0</span> / <span id="totalAmount">0</span></p>
+        @*<p>المتبقي: <span id="remainingAmount">0</span></p>*@
+    </div>
+
+    <style>
+        .progress-container {
+            width: 100%;
+            height: 25px;
+            background: #ddd;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #4caf50;
+            transition: 0.4s;
+        }
+    </style>
+
+
+
+    <!-- Tabs -->
+    <!-- Tabs -->
+    <div class="tabs">
+
+        <button class="tab-btn active" onclick="showTab('unpaid')">
+            Open Invoices
+            <span class="count">2</span>
+        </button>
+
+        <button class="tab-btn" onclick="showTab('paid')">
+            Completed Invoices
+            <span class="count">2</span>
+        </button>
+
+    </div>
+
+    <!-- Unpaid -->
+    <div class="invoice-list active" id="unpaid">
+
+        <div class="invoice-card">
+            <div class="invoice-left">
+                <h3>Invoice #2606170</h3>
+                <p>Outstanding amount: €237.65</p>
+                <p>Invoice Date: 27 February 2024</p>
+            </div>
+
+            <button class="status-btn unpaid">
+                Payment Time Expired
+            </button>
+        </div>
+
+        <div class="invoice-card">
+            <div class="invoice-left">
+                <h3>Invoice #2606171</h3>
+                <p>Outstanding amount: €120.00</p>
+                <p>Invoice Date: 28 February 2024</p>
+            </div>
+
+            <button class="status-btn unpaid">
+                Unpaid
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Paid -->
+    <div class="invoice-list" id="paid">
+
+        <div class="invoice-card">
+            <div class="invoice-left">
+                <h3>Invoice #2605001</h3>
+                <p>Paid amount: €500.00</p>
+                <p>Invoice Date: 20 February 2024</p>
+            </div>
+
+            <button class="status-btn paid">
+                Paid
+            </button>
+        </div>
+
+        <div class="invoice-card">
+            <div class="invoice-left">
+                <h3>Invoice #2605002</h3>
+                <p>Paid amount: €850.00</p>
+                <p>Invoice Date: 18 February 2024</p>
+            </div>
+
+            <button class="status-btn paid">
+                Paid
+            </button>
+        </div>
+
+    </div>
+
+</div>
+<script>
+
+    function showTab(tabId) {
+
+        document.querySelectorAll('.invoice-list').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        document.getElementById(tabId).classList.add('active');
+
+        event.target.classList.add('active');
+    }
+
+</script>
+
+<script>
+    // إجمالي الكريدت
+    let totalCredit = 50000;
+
+    // المبلغ المستخدم
+    let usedCredit = 3000;
+
+    // حساب النسبة
+    let percentage = (usedCredit / totalCredit) * 100;
+
+    // تحديث البار
+    document.querySelector(".progress-bar").style.width = percentage + "%";
+
+    // عرض البيانات
+    document.getElementById("usedAmount").innerText = usedCredit;
+    document.getElementById("totalAmount").innerText = totalCredit;
+    document.getElementById("remainingAmount").innerText = totalCredit - usedCredit;
+</script>
+

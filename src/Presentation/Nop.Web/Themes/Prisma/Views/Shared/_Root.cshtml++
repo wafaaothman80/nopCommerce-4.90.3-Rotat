@@ -1,0 +1,188 @@
+﻿@using Nop.Core
+@using Nop.Services.Configuration
+@using Nop.Services.Security
+@using Nop.Services.Orders
+@using Nop.Core.Domain.Orders
+
+@inject IStoreContext storeContext
+@inject IWorkContext workContext
+@inject ISettingService settingService
+@inject IPermissionService permissionService
+@inject ShoppingCartSettings shoppingCartSettings
+@inject IShoppingCartService shoppingCartService
+
+@{
+    Layout = "_Root.Head";
+
+    var storeId = (await storeContext.GetCurrentStoreAsync()).Id;
+
+    var controllerName = Url.ActionContext.RouteData.Values["controller"].ToString();
+    var isHomePage = controllerName.Equals("home", StringComparison.InvariantCultureIgnoreCase);
+
+    var customer = await workContext.GetCurrentCustomerAsync();
+    int shoppingCartItems = 0;
+    int wishlistItems = 0;
+
+    if (customer.HasShoppingCartItems)
+    {
+        shoppingCartItems = (await shoppingCartService.GetShoppingCartAsync(await workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart, (await storeContext.GetCurrentStoreAsync()).Id))
+                          .Sum(item => item.Quantity);
+
+        wishlistItems = (await shoppingCartService.GetShoppingCartAsync(await workContext.GetCurrentCustomerAsync(), ShoppingCartType.Wishlist, (await storeContext.GetCurrentStoreAsync()).Id))
+                          .Sum(item => item.Quantity);
+    }
+
+    var shoppingCartEnabled = await permissionService.AuthorizeAsync(StandardPermission.PublicStore.ENABLE_SHOPPING_CART);
+    var wishlistEnabled = await permissionService.AuthorizeAsync(StandardPermission.PublicStore.ENABLE_WISHLIST);
+
+    string sliderType = await settingService.GetSettingByKeyAsync("prismathemesettings.slidertype", "full-width-slider", storeId, true);
+}
+
+@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.BodyStartHtmlTagAfter })
+@{ await Html.RenderPartialAsync("_Notifications"); }
+@{ await Html.RenderPartialAsync("_JavaScriptDisabledWarning"); }
+
+<div class="master-wrapper-page">
+    <div class="master-header-wrapper-parent">
+        <div class="master-header-wrapper">
+            @await Component.InvokeAsync(typeof(AdminHeaderLinksViewComponent))
+            <div class="header-wrapper">
+                @{ await Html.RenderPartialAsync("_Header"); }
+                <div class="responsive-nav-wrapper-parent">
+                    <div class="responsive-nav-wrapper">
+                        <div class="menu-title">
+                            <span>@T("SevenSpikes.Themes.Common.MenuTitle")</span>
+                        </div>
+                        <div class="search-wrap">
+                            <span>@T("Search")</span>
+                        </div>
+                        <div class="personal-button" id="header-links-opener">
+                            <span>@T("SevenSpikes.Themes.Common.Personal")</span>
+                        </div>
+                        @if (wishlistEnabled)
+                        {
+                            <div class="wishlist-button">
+                                <a href="@Url.RouteUrl("Wishlist")" class="ico-wishlist">
+                                    <span class="wishlist-label">@T("Wishlist")</span>
+                                    <span class="wishlist-qty">@T("Wishlist.HeaderQuantity", wishlistItems)</span>
+                                </a>
+                            </div>
+                        }
+                        @if (shoppingCartEnabled)
+                        {
+                            <div class="shopping-cart-link">
+                                <a href="@Url.RouteUrl("ShoppingCart")">@T("ShoppingCart")</a>
+                                <span class="cart-qty">@T("ShoppingCart.HeaderQuantity", shoppingCartItems)</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Bar -->
+            <div class="bg-[#1a237e] text-white text-[10px] py-1 px-4 flex justify-between items-center border-b border-white/10">
+                <div class="flex gap-4">
+                    <span>B2B parts platform for bearings, automotive, agriculture & industrial parts</span>
+                    <span>+971 4 886 5100</span>
+                </div>
+                <div class="flex gap-4">
+                    <span>Track order</span>
+                    <span class="font-bold">EN | USD</span>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <header class="bg-[#1a237e] text-white py-4 px-8 flex justify-between items-center sticky top-0 z-50">
+                <div class="flex items-center gap-8">
+                    <div class="text-2xl font-bold tracking-tighter flex items-center">
+                        <div class="w-6 h-6 border-4 border-yellow-400 rounded-full mr-2"></div>
+                        ROTAT
+                    </div>
+                    <nav class=" md:flex gap-6 text-sm font-medium">
+                        <a href="#" class="hover:text-yellow-400">Products</a>
+                        <a href="#" class="hover:text-yellow-400">Brands <i class="fas fa-chevron-down text-[10px]"></i></a>
+                        <a href="#" class="hover:text-yellow-400">News</a>
+                        <a href="#" class="hover:text-yellow-400">Contact</a>
+                    </nav>
+                </div>
+                <div class="flex items-center gap-6 text-sm">
+                    <a href="#" class="hover:text-yellow-400"><i class="far fa-user mr-2"></i> Sign in</a>
+                    <a href="#" class="hover:text-yellow-400 flex items-center">
+                        <div class="relative mr-2">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="absolute -top-2 -right-2 bg-yellow-400 text-[#1a237e] text-[8px] rounded-full w-4 h-4 flex items-center justify-center font-bold">0</span>
+                        </div>
+                        Quote list
+                    </a>
+                    <button class="bg-yellow-400 text-[#1a237e] px-4 py-2 rounded-full font-bold text-xs hover:bg-yellow-300 transition">Request a quote</button>
+                </div>
+            </header>
+
+        </div>
+        <div class="overlayOffCanvas"></div>
+        <div class="header-menu">
+            <div class="navigation-wrapper">
+                <div class="close-menu">
+                    <span>@T("SevenSpikes.Themes.Common.CloseMenu")</span>
+                </div>
+            </div>
+            @{
+                var menuHtml = await Component.InvokeAsync("Widget", new { widgetZone = "theme_header_menu" });
+            }
+            @if (!String.IsNullOrEmpty(await menuHtml.RenderHtmlContentAsync()))
+            {
+                @menuHtml
+            }
+            else
+            {
+                @await Component.InvokeAsync(typeof(MainMenuViewComponent))
+            }
+        </div>
+    </div>
+    @if (isHomePage)
+    {
+        if (sliderType == "full-width-slider")
+        {
+            @await Component.InvokeAsync("Widget", new { widgetZone = "home_page_main_slider" })
+        }
+        else if (sliderType == "standard-slider")
+        {
+            <div class="home-page-top-banner-wrapper">
+                <div class="slider-left">
+                    @await Component.InvokeAsync("Widget", new { widgetZone = "home_page_main_slider" })
+                </div>
+                <div class="banners-right">
+                    <div>@await Component.InvokeAsync("Widget", new { widgetZone = "home_page_right_banner_1" })</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="slider-gallery">
+                @await Component.InvokeAsync("Widget", new { widgetZone = "home_page_main_slider" })
+            </div>
+        }
+    }
+    <div class="master-wrapper-content" id="main" role="main">
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.ContentBefore })
+        @await Component.InvokeAsync("Widget", new { widgetZone = "prisma_color_squares" })
+        <div class="master-column-wrapper">
+            @RenderBody()
+        </div>
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.ContentAfter })
+    </div>
+    @await Component.InvokeAsync(typeof(FooterViewComponent))
+    <div class="filter-options">
+        <div class="filters-button">
+            <span>@T("SevenSpikes.Themes.Common.Filters")</span>
+        </div>
+        <div class="product-sorting-mobile">
+            Sort
+        </div>
+        <div class="product-display-mobile">
+            display
+        </div>
+    </div>
+</div>
+@await Component.InvokeAsync(typeof(EuCookieLawViewComponent))
+@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.BodyEndHtmlTagBefore })

@@ -1,0 +1,164 @@
+﻿@model NopStation.Plugin.Misc.AlgoliaSearch.Models.SearchModel
+@{
+    // Use _Root layout which is simpler
+    Layout = "_Root";
+
+    // Set page title - with fallback
+    var searchTitle = T("SearchResults");
+    ViewBag.Title = !string.IsNullOrEmpty(searchTitle.ToString()) ? searchTitle.Text : "Search Results";
+
+    if (!string.IsNullOrWhiteSpace(Model.q))
+    {
+        var pageTitle = T("Search.PageTitle", Model.q);
+        ViewBag.Title = !string.IsNullOrEmpty(pageTitle.ToString()) ? pageTitle.Text : $"Search: {Model.q}";
+    }
+}
+
+<!-- Manual breadcrumb -->
+<div class="breadcrumb">
+    <ul>
+        <li>
+            @{
+                var homeText = T("HomePage");
+                var homeTextStr = !string.IsNullOrEmpty(homeText.ToString()) ? homeText.Text : "Home";
+            }
+            <a href="@Url.RouteUrl("HomePage")" title="@homeTextStr">@homeTextStr</a>
+        </li>
+        <li>
+            @{
+                var searchResultsText = T("SearchResults");
+                var searchResultsStr = !string.IsNullOrEmpty(searchResultsText.ToString()) ? searchResultsText.Text : "Search Results";
+            }
+            <strong>@searchResultsStr</strong>
+        </li>
+    </ul>
+</div>
+
+<div class="page search-page">
+    <div class="page-title">
+        <h1>@ViewBag.Title</h1>
+    </div>
+
+    <div class="center-2">
+        <div class="page-body">
+            <!-- Left sidebar - ALWAYS SHOW TEST FILTERS -->
+            <div class="side-2" style="float: left; width: 25%; padding-right: 20px;">
+                <h3>Product Filters</h3>
+
+                <!-- Category Filter -->
+                <div class="block block-category-navigation">
+                    <div class="title">
+                        <strong>Categories</strong>
+                    </div>
+                    <div class="listbox">
+                        <ul class="list">
+                            <li><a href="/search?category=ball-bearings">Ball Bearings</a> <span class="number">(15)</span></li>
+                            <li><a href="/search?category=roller-bearings">Roller Bearings</a> <span class="number">(12)</span></li>
+                            <li><a href="/search?category=thrust-bearings">Thrust Bearings</a> <span class="number">(8)</span></li>
+                            <li><a href="/search?category=linear-bearings">Linear Bearings</a> <span class="number">(6)</span></li>
+                            <li><a href="/search?category=pillow-block">Pillow Block Bearings</a> <span class="number">(10)</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Manufacturer Filter -->
+                <div class="block block-manufacturer-navigation">
+                    <div class="title">
+                        <strong>Manufacturers</strong>
+                    </div>
+                    <div class="listbox">
+                        <ul class="list">
+                            <li><a href="/search?manufacturer=skf">SKF</a> <span class="number">(45)</span></li>
+                            <li><a href="/search?manufacturer=ntn">NTN</a> <span class="number">(32)</span></li>
+                            <li><a href="/search?manufacturer=fag">FAG</a> <span class="number">(28)</span></li>
+                            <li><a href="/search?manufacturer=timken">TIMKEN</a> <span class="number">(25)</span></li>
+                            <li><a href="/search?manufacturer=nsk">NSK</a> <span class="number">(38)</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Price Range Filter -->
+                <div class="block block-price-range-filter">
+                    <div class="title">
+                        <strong>Price Range</strong>
+                    </div>
+                    <div class="listbox">
+                        <ul class="list">
+                            <li><a href="/search?price=0-50">Under $50</a></li>
+                            <li><a href="/search?price=50-100">$50 - $100</a></li>
+                            <li><a href="/search?price=100-200">$100 - $200</a></li>
+                            <li><a href="/search?price=200-500">$200 - $500</a></li>
+                            <li><a href="/search?price=500-1000">Above $500</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Dimension Filter (for bearing searches) -->
+                <div class="block block-dimension-filter">
+                    <div class="title">
+                        <strong>Inner Diameter (mm)</strong>
+                    </div>
+                    <div class="listbox">
+                        <ul class="list">
+                            <li><a href="/RangeFilter/SearchByRange?innerDimension=10">10mm</a></li>
+                            <li><a href="/RangeFilter/SearchByRange?innerDimension=12">12mm</a></li>
+                            <li><a href="/RangeFilter/SearchByRange?innerDimension=15">15mm</a></li>
+                            <li><a href="/RangeFilter/SearchByRange?innerDimension=17">17mm</a></li>
+                            <li><a href="/RangeFilter/SearchByRange?innerDimension=20">20mm</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Debug Info (remove in production) -->
+                <div class="block block-debug" style="background: #f8f9fa; border: 1px dashed #ccc; margin-top: 20px; padding: 10px;">
+                    <div class="title">
+                        <strong>Debug Info</strong>
+                    </div>
+                    <div class="listbox">
+                        <p><small>PagingContext: @(Model.PagingFilteringContext != null ? "Exists" : "NULL")</small></p>
+                        <p><small>Products: @(Model.Products?.Count ?? 0)</small></p>
+                        <p><small>Search: @Model.q</small></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products -->
+            <div class="center-2" style="float: right; width: 75%;">
+                @if (Model.Products != null && Model.Products.Any())
+                {
+                    <div class="product-count" style="margin-bottom: 20px; padding: 10px; background: #f5f5f5;">
+                        <strong>Found @Model.Products.Count products</strong>
+                        @if (!string.IsNullOrEmpty(Model.q))
+                        {
+                            <span> for "@Model.q"</span>
+                        }
+                    </div>
+
+                    <div class="product-grid">
+                        <div class="item-grid">
+                            @foreach (var product in Model.Products)
+                            {
+                                <div class="item-box">
+                                    @await Html.PartialAsync("_ProductBox", product)
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-result" style="text-align: center; padding: 40px;">
+                        @{
+                            var noResultsText = T("Search.NoResultsText");
+                            var noResultsStr = !string.IsNullOrEmpty(noResultsText.ToString()) ? noResultsText.Text : "No products were found that matched your criteria.";
+                        }
+                        <h3>@noResultsStr</h3>
+                        <p>Try adjusting your search criteria or browse our categories.</p>
+                    </div>
+                }
+            </div>
+
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+</div>

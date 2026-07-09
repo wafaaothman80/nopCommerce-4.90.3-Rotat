@@ -1,0 +1,232 @@
+@*
+    // ***   ** ****** ****** ****** ******* **     ** ****** ***   ** **** ****
+    // ****  ** **  ** **  ** **  **  **  **  **   **  **  ** ****  ** *    *
+    // ** ** ** **  ** ****** ******  **  **   ** **   ****** ** ** ** *    ***
+    // **  **** **  ** **     **  **  **  **    ***    **  ** **  **** *    *
+    // **   *** ****** **     **  ** *******     *     **  ** **   *** **** ****
+    // **************************************************************************
+    // *                                                                         *
+    // *    NopCommerce Public RESTful API Plugin by NopAdvance team             *
+    // *    Copyright (c) NopAdvance LLP. All Rights Reserved.                   *
+    // *                                                                         *
+    // **************************************************************************
+    // *                                                                         *
+    // *    This software is licensed for use under the terms accepted during    *
+    // *    the purchase of this product. A non-exclusive, non-transferable      *
+    // *    right is granted to use this product on the website for which it was *
+    // *    licensed.                                                            *
+    // *                                                                         *
+    // *    Companies purchasing this product for their customers are permitted, *
+    // *    provided the use complies with the terms outlined in the EULA:       *
+    // *    https://store.nopadvance.com/eula.                                   *
+    // *                                                                         *
+    // *    You may not reverse engineer, decompile, modify, or distribute this  *
+    // *    software without explicit permission from NopAdvance LLP. Any        *
+    // *    violation will result in the termination of your license and may     *
+    // *    lead to legal action.                                                *
+    // *                                                                         *
+    // **************************************************************************
+    // *    Contact: contact@nopadvance.com                                      *
+    // *    Website: https://nopadvance.com                                      *
+    // **************************************************************************
+*@
+@model APIApplicationSearchModel
+
+@{
+    Layout = "_AdminLayout";
+    //page title
+    ViewBag.PageTitle = T(LocaleResourceDefaults.APPLICATIONS_MENU).Text;
+    //active menu item (system name)
+    NopHtml.SetActiveMenuItemSystemName(SiteMapDefaults.APPLICATIONS_MENU_SYSTEM_NAME);
+}
+
+@{
+    const string hideSearchBlockAttributeName = "APIApplications.HideSearchBlock";
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">
+        @T(LocaleResourceDefaults.APPLICATIONS_MENU)
+    </h1>
+    <div class="float-right">
+        &nbsp;
+    </div>
+</div>
+<section class="content">
+    <div class="container-fluid">
+        <div class="form-horizontal">
+            <div class="cards-group">
+                <div class="card card-default card-search">
+                    <div class="card-body">
+                        <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
+                            <div class="search-text">@T("Admin.Common.Search")</div>
+                            <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                            <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                        </div>
+
+                        <div class="search-body @(hideSearchBlock ? "closed" : "")">
+
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="SearchApplicationName" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor asp-for="SearchApplicationName" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="text-center col-12">
+                                    <button type="button" id="search-applications" class="btn btn-primary btn-search">
+                                        <i class="fas fa-search"></i>
+                                        @T("Admin.Common.Search")
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-default">
+                    <div class="card-body">
+                        @await Html.PartialAsync("Table", new DataTablesModel
+                   {
+                       Name = "applications-grid",
+                       UrlRead = new DataUrl("ApplicationList", SiteMapDefaults.ADMIN_PUBLIC_API_CONTROLLER_NAME, null),
+                       UrlUpdate = new DataUrl("ApplicationUpdate", SiteMapDefaults.ADMIN_PUBLIC_API_CONTROLLER_NAME, null),
+                       UrlDelete = new DataUrl("ApplicationDelete", SiteMapDefaults.ADMIN_PUBLIC_API_CONTROLLER_NAME, null),
+                       SearchButtonId = "search-applications",
+                       Length = Model.PageSize,
+                       LengthMenu = Model.AvailablePageSizes,
+                       Filters = new List<FilterParameter>
+                            {
+                                new FilterParameter(nameof(Model.SearchApplicationName))
+                            },
+                       ColumnCollection = new List<ColumnProperty>
+                            {
+                                new ColumnProperty(nameof(APIApplicationModel.Name))
+                                {
+                                    Title = T(LocaleResourceDefaults.APPLICATION_NAME).Text,
+                                    Width = "300",
+                                    Editable = true,
+                                    EditType = EditType.String
+                                },
+                                new ColumnProperty(nameof(APIApplicationModel.APIKey))
+                                {
+                                    Title = T(LocaleResourceDefaults.API_KEY).Text,
+                                    Width = "300"
+                                },
+                                new ColumnProperty(nameof(APIApplicationModel.Store))
+                                {
+                                    Title = T(LocaleResourceDefaults.APPLICATION_STORE_ID).Text,
+                                    Width = "200"
+                                },
+                                new ColumnProperty(nameof(APIApplicationModel.Active))
+                                {
+                                    Title = T(LocaleResourceDefaults.APPLICATION_ACTIVE).Text,
+                                    Width = "70",
+                                    ClassName = NopColumnClassDefaults.CenterAll,
+                                    Render = new RenderBoolean(),
+                                    Editable = true,
+                                    EditType = EditType.Checkbox
+                                },
+                                new ColumnProperty(nameof(APIApplicationModel.Id))
+                                {
+                                    Title = T("Admin.Common.Edit").Text,
+                                    Width = "200",
+                                    ClassName =  NopColumnClassDefaults.Button,
+                                    Render = new RenderButtonsInlineEdit()
+                                },
+                                new ColumnProperty(nameof(APIApplicationModel.Id))
+                                {
+                                    Title = T("Admin.Common.Delete").Text,
+                                    Width = "100",
+                                    ClassName =  NopColumnClassDefaults.Button,
+                                    Render = new RenderButtonRemove(T("Admin.Common.Delete").Text)
+                                }
+                            }
+                   })
+                    </div>
+                    <div class="card card-default">
+                        <div class="card-header">
+                            @T("Admin.Common.AddNewRecord")
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-label asp-for="@Model.AddApplication.Name" />
+                                </div>
+                                <div class="col-md-9">
+                                    <nop-editor asp-for="@Model.AddApplication.Name" />
+                                    <span asp-validation-for="@Model.AddApplication.Name"></span>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-label asp-for="@Model.AddApplication.StoreId" />
+                                </div>
+                                <div class="col-md-9">
+                                    <nop-select asp-for="@Model.AddApplication.StoreId" asp-items="@Model.AddApplication.AvailableStores" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-label asp-for="@Model.AddApplication.Active" />
+                                </div>
+                                <div class="col-md-9">
+                                    <nop-editor asp-for="@Model.AddApplication.Active" />
+                                    <span asp-validation-for="@Model.AddApplication.Active"></span>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-9 offset-md-3">
+                                    <button type="button" id="addApplication" class="btn btn-primary">@T("Admin.Common.AddNewRecord")</button>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            $(document).ready(function () {
+                                $('#addApplication').click(function () {
+                                    $('#addApplication').attr('disabled', true);
+                                    var postData = {
+                                        Name: $("#@Html.IdFor(model => model.AddApplication.Name)").val(),
+                                        StoreId: $("#@Html.IdFor(model => model.AddApplication.StoreId)").val(),
+                                        Active: $("#@Html.IdFor(model => model.AddApplication.Active)").val()
+                                    };
+                                    addAntiForgeryToken(postData);
+
+                                    $.ajax({
+                                        cache: false,
+                                        type: "POST",
+                                        url: "@Html.Raw(Url.Action("ApplicationAdd", @SiteMapDefaults.ADMIN_PUBLIC_API_CONTROLLER_NAME, null))",
+                                        data: postData,
+                                        success: function (data, textStatus, jqXHR) {
+                                            if (data.Result) {
+                                                //reload grid
+                                                updateTable('#applications-grid');
+
+                                                //clear input value
+                                                $("#@Html.IdFor(model => model.AddApplication.Name)").val('');
+                                                $("#@Html.IdFor(model => model.AddApplication.Active)").prop("checked", false);
+                                            } else {
+                                                //display errors if returned
+                                                display_nop_error(data);
+                                            }
+                                        },
+                                        complete: function (jqXHR, textStatus) {
+                                            $('#addApplication').attr('disabled', false);
+                                        }
+                                    });
+                                });
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

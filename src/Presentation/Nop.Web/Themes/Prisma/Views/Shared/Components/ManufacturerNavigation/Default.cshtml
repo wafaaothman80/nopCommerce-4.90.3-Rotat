@@ -1,0 +1,57 @@
+﻿@model ManufacturerNavigationModel
+@inject Nop.Core.IWebHelper webHelper
+
+@using Nop.Core.Domain.Catalog
+
+@{
+    var currentCategoryId = 0;
+    var currentManufacturerId = 0;
+
+   
+    int.TryParse(webHelper.QueryString<string>("cid"), out currentCategoryId);
+    int.TryParse(webHelper.QueryString<string>("mid"), out currentManufacturerId);
+
+  
+    if (currentCategoryId == 0 &&
+        ViewContext.RouteData.Values["controller"]?.ToString()?.Equals("Catalog", StringComparison.InvariantCultureIgnoreCase) == true &&
+        ViewContext.RouteData.Values["action"]?.ToString()?.Equals("Category", StringComparison.InvariantCultureIgnoreCase) == true)
+    {
+        int.TryParse(ViewContext.RouteData.Values["categoryId"]?.ToString(), out currentCategoryId);
+    }
+
+    
+    if (currentManufacturerId == 0 &&
+        ViewContext.RouteData.Values["controller"]?.ToString()?.Equals("Catalog", StringComparison.InvariantCultureIgnoreCase) == true &&
+        ViewContext.RouteData.Values["action"]?.ToString()?.Equals("Manufacturer", StringComparison.InvariantCultureIgnoreCase) == true)
+    {
+        int.TryParse(ViewContext.RouteData.Values["manufacturerId"]?.ToString(), out currentManufacturerId);
+    }
+}
+@using Nop.Core.Domain.Catalog
+
+@if (currentManufacturerId > 0)
+{
+    <div class="block block-manufacturer-navigation">
+       @*  <div class="title">
+            <strong>@T("Manufacturers")</strong>
+        </div> *@
+        
+        <a class="titleFilter" href="@Url.Action("Search", "AlgoliaSearch", new { mid = currentManufacturerId })">Filters</a>
+      @*   <div class="listbox">
+            <ul class="list">
+                @foreach (var manufacturer in Model.Manufacturers)
+                {
+                    <li class="@(manufacturer.IsActive ? "active" : "inactive")">
+                        <a href="@Url.Action("Search", "AlgoliaSearch", new {cid = currentCategoryId, mid = manufacturer.Id })">@manufacturer.Name</a>
+                    </li>
+                }
+            </ul>
+            @if (Model.TotalManufacturers > Model.Manufacturers.Count)
+            {
+                <div class="view-all">
+                    <a href="@Url.RouteUrl("ManufacturerList")">@T("Manufacturers.ViewAll")</a>
+                </div>
+            }
+        </div> *@
+    </div>
+}

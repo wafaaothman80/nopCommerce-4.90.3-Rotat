@@ -1,0 +1,264 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Language Name="EN">
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI">
+        <Value>Public API</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications">
+        <Value>Applications</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.List.SearchApplicationName">
+        <Value>Name</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.List.SearchApplicationName.Hint">
+        <Value>Search by a specific application name.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.Fields.Name">
+        <Value>Application name</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.Fields.Name.Hint">
+        <Value>The application's name</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.Fields.Store">
+        <Value>Store</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.Fields.Store.Hint">
+        <Value>A store name in which this api key is applied.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.Fields.APIKey">
+        <Value>API key</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.Fields.Active">
+        <Value>Active</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.Fields.Active.Hint">
+        <Value>Is this application active. To disable/suspend an application, uncheck this.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.RestartNote">
+        <Value>Do not forget to restart the application once this setting has been modified.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.EnableAPI">
+        <Value>Enabled</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.EnableSwagger">
+        <Value>Enabled Swagger</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.EnableSwagger.Hint">
+        <Value>Enabled Swagger</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.IsDevelopment">
+        <Value>Is Development</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.IsDevelopment.Hint">
+        <Value>Check to enable development mode. This will disable authorizations.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.SecretKey">
+        <Value>Secret Key</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.SecretKey.Hint">
+        <Value>The security key used for jwt signature validation as token parameter.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.SecurityAlgorithmType">
+        <Value>Security Algorithm</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.SecurityAlgorithmType.Hint">
+        <Value>Select the security algorithm signature of the key encryption for the token.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.AccessTokenExpiration">
+        <Value>Access Token Expiration</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.AccessTokenExpiration.Hint">
+        <Value>Access Token Expiration</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.RefreshTokenExpiration">
+        <Value>Refresh Token Expiration</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.RefreshTokenExpiration.Hint">
+        <Value>Refresh Token Expiration</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.EnableDebugging">
+        <Value>Enable Debugging</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.EnableDebugging.Hint">
+        <Value>Enabling debugging will log api's request and response.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.Fields.EnableDebugging.Warning">
+        <Value>Warning: Enabling debugging will disable response compression of minification settings.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Configure.SecurityKey.Changed">
+        <Value>Security key changed</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Login.Username.Required">
+        <Value>Please enter your username</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Login.Password.Required">
+        <Value>Please enter your password</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Maintenance.DeleteTokens">
+        <Value>Delete expired tokens</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Maintenance.DeleteTokens.TotalDeleted">
+        <Value>{0} items were deleted</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog">
+        <Value>Debug log</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.Customer">
+        <Value>Customer</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.Customer.Hint">
+        <Value>A customer name in which this request called.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.Store">
+        <Value>Store</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.Store.Hint">
+        <Value>A store name in which this call is requested.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.StatusCode">
+        <Value>Status code</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.StatusCode.Hint">
+        <Value>Response status code.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.Method">
+        <Value>Method</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.Method.Hint">
+        <Value>The requested method.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.Headers">
+        <Value>Headers</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.Headers.Hint">
+        <Value>The requested headers.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.RequestBody">
+        <Value>Request body</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.RequestBody.Hint">
+        <Value>The request body.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.QueryString">
+        <Value>Query string</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.QueryString.Hint">
+        <Value>The query string.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.ResponseBody">
+        <Value>Response body</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.ResponseBody.Hint">
+        <Value>The response body.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.ResponseTime">
+        <Value>Response time</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.ResponseTime.Hint">
+        <Value>The response time.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.Path">
+        <Value>Path</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.Path.Hint">
+        <Value>The requested path.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.CreatedOnUtc">
+        <Value>Created on</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Fields.CreatedOnUtc.Hint">
+        <Value>Date/Time the log entry was created.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Search.Fields.CreatedOnFrom">
+        <Value>Created from</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Search.Fields.CreatedOnFrom.Hint">
+        <Value>The creation from date for the search.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Search.Fields.CreatedOnTo">
+        <Value>Created to</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Search.Fields.CreatedOnTo.Hint">
+        <Value>The creation to date for the search.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Search.Fields.Stores">
+        <Value>Store</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Search.Fields.Stores.Hint">
+        <Value>Select a store.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Cleared">
+        <Value>The debug log has been cleared successfully.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.Deleted">
+        <Value>The debug log entry has been deleted successfully.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.DebugLogViewDetails">
+        <Value>Debug log details</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DebugLog.BackToList">
+        <Value>Back to debug log list</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Maintenance.Token.IncludeRevoked">
+        <Value>Include revoked</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Maintenance.Token.IncludeRevoked.Hint">
+        <Value>Check to include revoked tokens.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens">
+        <Value>Active tokens</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.List.SearchApplication">
+        <Value>Application</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.List.SearchApplication.Hint">
+        <Value>Search by a specific application.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.List.CustomerRoles">
+        <Value>Customer roles</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.List.CustomerRoles.Hint">
+        <Value>Filter by customer role.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.List.SearchEmail">
+        <Value>Email</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.List.SearchEmail.Hint">
+        <Value>Search by a specific email.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.List.SearchFirstname">
+        <Value>First name</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.List.SearchFirstname.Hint">
+        <Value>Search by a first name.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.List.SearchLastName">
+        <Value>Last name</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.List.SearchLastName.Hint">
+        <Value>Search by a last name.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.Fields.ApplicationName">
+        <Value>Application</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.Revoke">
+        <Value>Revoke</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.RevokeSelected">
+        <Value>Revoke (selected)</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.Revoke.Warning">
+        <Value>Failed to revoke token.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.Tokens.RevokeSelected.Warning">
+        <Value>Failed to revoke selected token(s).</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.License.InValid">
+        <Value>License is invalid</Value>
+    </LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.Fields.Name.Required">
+		<Value>Application Name cannot be empty</Value>
+	</LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.Applications.Fields.Name.Exists">
+		<Value>Application Name Already Exists</Value>
+	</LocaleResource>
+</Language>

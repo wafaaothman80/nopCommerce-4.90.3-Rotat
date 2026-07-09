@@ -1,0 +1,44 @@
+@model MenuItemModel
+
+<li class="menu__item @(Model.ChildrenItems.Any() ? "menu-dropdown" : "") @Model.CssClass" data-item-id="@Model.Id" role="menuitem">
+    @await Html.PartialAsync("_MenuItem.cshtml", Model)
+    <div class="plus-button"></div>
+
+    <div class="menu__grid-view sublist-wrap" role="menu" aria-label="@Model.Title">
+        <div class=" navigation-wrapper">
+            <div class="close-menu"><span>close</span></div>
+            <div class="back-button"><span>Back</span></div>
+        </div>
+        @foreach (var item in Model.ChildrenItems)
+        {
+            <div class="menu__group" role="menuitem">
+                <a href="@item.Url" class="menu__image-link @(string.IsNullOrEmpty(item.Url) ? "menu__link--inactive" : "")">@item.Title</a>
+                @if (item.ChildrenItems.Any())
+                {
+                    <div class="plus-button"></div>
+                }
+                @if (item.Picture is not null)
+                {
+                    <div class="grid-menu-img-wrapper">
+                        <img src="@item.Picture.ImageUrl" alt="@item.Picture.AlternateText" title="@item.Picture.Title" class="menu__image">
+                    </div>
+                }
+                <ul class="sublist">
+                    <li class=" navigation-wrapper">
+                        <div class="close-menu"><span>close</span></div>
+                        <div class="back-button"><span>Back</span></div>
+                    </li>
+                    @if (item.ChildrenItems.Any())
+                    {
+                        foreach (var menuItem in item.ChildrenItems)
+                        {
+                            <li>
+                                @await Html.PartialAsync("_MenuItem.cshtml", menuItem)
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</li>

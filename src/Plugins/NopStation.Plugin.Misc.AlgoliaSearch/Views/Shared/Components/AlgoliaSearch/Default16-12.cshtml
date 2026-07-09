@@ -1,0 +1,1141 @@
+﻿@model AlgoliaSearchModel
+@inject Nop.Core.Domain.Catalog.CatalogSettings catalogSettings
+@inject Nop.Core.IStoreContext storeContext
+@inject Nop.Core.IWebHelper webHelper
+
+<script asp-location="Footer" src="//cdn.jsdelivr.net/algoliasearch/3/algoliasearch.min.js"></script>
+<script asp-location="Footer" src="//cdn.jsdelivr.net/autocomplete.js/0/autocomplete.min.js"></script>
+<style>
+    .autocomplete-item {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        min-height: 50px;
+        text-decoration: none;
+        color: inherit;
+    }
+
+        .autocomplete-item:hover {
+            background-color: #f5f5f5;
+        }
+
+    .item-image {
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 3px;
+        }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-name {
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+
+    .item-manufacturer {
+        font-size: 12px;
+        color: #666;
+        font-style: italic;
+    }
+
+    .no-result {
+        padding: 10px;
+        color: #666;
+    }
+
+    .algolia-autocomplete {
+        width: 100%;
+    }
+
+        .algolia-autocomplete .aa-dropdown-menu {
+            width: 100%;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 10000;
+        }
+
+    /* Dimension Search Styles */
+    .search-container {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .search-tabs li {
+        margin-right: 20px;
+    }
+
+    .search-tabs a:hover {
+        color: #333;
+    }
+
+    .search-tabs a.active {
+        color: #1f278a;
+        border-bottom-color: #1f278a;
+        font-weight: 600;
+    }
+
+    .search-tabs .gray-blue {
+        color: #999;
+        margin-right: 20px;
+    }
+
+    .search-input-group {
+        display: flex;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .search-box-text {
+        flex: 1;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-right: none;
+        border-radius: 4px 0 0 4px;
+        font-size: 14px;
+        height: 44px;
+        box-sizing: border-box;
+    }
+
+    .search-box-button {
+        padding: 0 25px;
+        background-color: #1f278a;
+        color: white;
+        border: 1px solid #1f278a;
+        border-radius: 0 4px 4px 0;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        height: 44px;
+        min-width: 100px;
+    }
+
+        .search-box-button:hover {
+            background-color: #0e164a;
+        }
+
+    .dimension-input-group {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .dimension-field {
+        flex: 1;
+        min-width: 200px;
+    }
+
+        .dimension-field label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+        }
+
+    .dimension-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+        height: 40px;
+    }
+
+    .dimension-range-inputs {
+        display: flex;
+        gap: 10px;
+    }
+
+        .dimension-range-inputs input {
+            flex: 1;
+        }
+
+    .dimension-tabs {
+        display: none; /* Hide the dimension tabs */
+        margin-top: 5px;
+        font-size: 12px;
+    }
+
+        .dimension-tabs a {
+            color: #666;
+            text-decoration: none;
+            padding: 3px 8px;
+            border-bottom: 1px solid transparent;
+            cursor: pointer;
+        }
+
+            .dimension-tabs a:hover {
+                color: #333;
+            }
+
+            .dimension-tabs a.active {
+                color: #1f278a;
+                border-bottom-color: #1f278a;
+                font-weight: 600;
+            }
+
+    .measurement-select {
+        margin-bottom: 10px;
+    }
+
+        .measurement-select select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #fff;
+            height: 40px;
+        }
+
+    .dimension-search-submit {
+        padding: 12px 25px;
+        background-color: #1f278a;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        width: 100%;
+        margin-top: 10px;
+        height: 44px;
+    }
+
+        .dimension-search-submit:hover {
+            background-color: #0e164a;
+        }
+
+    .dimension-exact, .dimension-range {
+        margin-bottom: 5px;
+    }
+
+    .item-dimensions {
+        font-size: 11px;
+        color: #888;
+        margin-top: 2px;
+    }
+
+    /* Responsive styles */
+    @@media (max-width: 768px) {
+        span.algolia-autocomplete {
+            border-radius: 0 !important;
+        }
+
+        .dimension-search-submit {
+            padding: 12px 25px;
+            background-color: #1f278a !important;
+            color: #fff !important;
+        }
+
+        form #dimension-search-form input {
+            background-color: white !important;
+            color: black !important;
+            margin: 10px 0px
+        }
+
+        form#dimension-search-form input {
+            color: #000;
+            background-color: white !important;
+        }
+
+        form#dimension-search-form * {
+            color: black
+        }
+
+        .dimension-input-group {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .dimension-field {
+            min-width: 100%;
+        }
+
+        .search-tabs {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+            .search-tabs li {
+                margin-right: 10px;
+                margin-bottom: 5px;
+            }
+    }
+
+    a.dimension-tab {
+        height: 24px;
+        display: flex;
+        padding: 7px;
+        align-content: center;
+        justify-content: center;
+        align-items: center;
+    }
+
+    button.dimension-search-submit {
+        color: white;
+    }
+
+        button.dimension-search-submit i {
+            display: none !important
+        }
+
+    .search-tabs li {
+        display: flex;
+        align-items: center;
+    }
+
+    .search-tab {
+        text-decoration: none;
+        color: #fff !important;
+        padding: 4px 2px;
+        font-size: 15px;
+        font-weight: 500;
+        background: none; /* بدون خلفية */
+    }
+
+        .search-tab.active {
+            color: #fdcd64 !important; /* الأزرق للتاب النشط */
+        }
+
+    .gray-blue {
+        color: #9aa3b5; /* لون الخط المائل */
+        font-size: 18px;
+        font-weight: 300;
+    }
+
+    .search-box.store-search-box {
+        margin-top: 0 !important;
+    }
+
+    form#dimension-search-form {
+        background-color: #f5f5f5;
+        padding: 10px;
+    }
+
+    @@media (min-width: 1025px) {
+        .search-tabs a {
+            display: flex;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 8px 0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .search-tabs {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-direction: row-reverse;
+            justify-content: center;
+            text-transform: capitalize;
+        }
+
+        button.button-1.search-box-button {
+            position: relative;
+            right: -33px;
+            height: 45px;
+            top: 0;
+        }
+
+        .header-wrapper {
+            height: 100px;
+        }
+    }
+
+    .search-box.store-search-box svg {
+        font-size: 10px !important;
+        width: 18px;
+        height: 18px;
+        float: left !important;
+        margin: 0px 5px;
+        color: white;
+        fill: #f1bc05;
+    }
+
+    button.button-1.search-box-button {
+        background: #fdbb2d;
+        background: linear-gradient(0deg, rgba(253, 187, 45, 1) 0%, rgba(255, 255, 255, 1) 100%), url(https://rotat.com/img/search.png) no-repeat center;
+        border-radius: 4px;
+        border: 0;
+        border: 0;
+    }
+
+    .button-1.search-box-button:after {
+        background: url(https://rotat.com/img/search.png) no-repeat center;
+        color: #666;
+        content: "";
+        display: inline-block;
+        background-size: cover;
+        width: 25px;
+        height: 25px;
+    }
+
+    html[ltr] .search-box.store-search-box svg {
+        font-size: 10px !important;
+        width: 18px;
+        height: 18px;
+        float: right !important;
+        margin-left: 10px;
+        color: #fff;
+        fill: #f1bc05;
+    }
+
+    ul.search-tabs {
+        display: flex;
+        padding: 0px
+    }
+
+    html[dir="ltr"] input#small-searchterms {
+        text-align: left;
+    }
+
+    a.search-tab img {
+        padding: 0px 5px
+    }
+</style>
+<style>
+    /* Mode toggle buttons */
+    .mode-toggle-btn {
+        padding: 8px 14px;
+        border: 1px solid #1f278a;
+        background-color: #1f278a;
+        color: white !important;
+        border-radius: 20px; /* الكرفات */
+        cursor: pointer;
+        font-size: 13px;
+        margin-right: 5px;
+        transition: all 0.3s ease;
+    }
+
+        .mode-toggle-btn.active,
+        .mode-toggle-btn:hover {
+            background-color: white;
+            color: #1f278a !important;
+            border: 1px solid #1f278a;
+        }
+
+    /* Submit button */
+    .dimension-submit-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 25px;
+        background-color: #1f278a;
+        color: white;
+        font-size: 16px;
+        border: none;
+        border-radius: 20px; /* الكرفات */
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+        .dimension-submit-button:hover {
+            background-color: white;
+            color: #1f278a;
+            border: 1px solid #1f278a;
+        }
+    /* Container */
+    .weight-inputs {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: nowrap;
+    }
+
+    /* Inputs + Select */
+    .weight-input,
+    .weight-unit-select {
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 20px; /* كرفات */
+        font-size: 14px;
+        outline: none;
+        height: 40px;
+    }
+
+    /* Inputs width */
+    .weight-input {
+        width: 120px;
+    }
+
+    /* Select width */
+    .weight-unit-select {
+        width: 160px;
+        background-color: #fff;
+        cursor: pointer;
+    }
+
+    /* Separator (-) */
+    .weight-separator {
+        font-weight: bold;
+        font-size: 18px;
+        color: #1f278a;
+    }
+
+    /* On focus */
+    .weight-input:focus,
+    .weight-unit-select:focus {
+        border-color: #1f278a;
+        box-shadow: 0 0 0 2px rgba(31, 39, 138, 0.1);
+    }
+</style>
+
+
+
+
+@{
+    NopHtml.AddCssFileParts("/Plugins/NopStation.Plugin.Misc.AlgoliaSearch/Contents/css/styles.css", string.Empty);
+}
+
+
+<div class="search-container">
+    <!-- Search Tabs -->
+    <div class="search-tabs-container">
+        <ul class="search-tabs">
+            <li>
+                <a href="#search-by-item" class="search-tab active" data-tab="item">
+                    Search by item
+                    <img alt="ROTAT" src="https://rotat.com/Themes/Prisma/Content/img/searchico.png">
+                </a>
+            </li>
+            <li class="gray-blue">/</li>
+            <li>
+                <a href="#search-by-dimensions" class="search-tab " data-tab="dimension">
+                    Search by dimensions
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="m14.293 5.293 1.5 1.5m-4.5 1.5 1.5 1.5m-4.5 1.5 1.5 1.5m-4.5 1.5 1.5 1.5m-4.434 1.566 3.868 3.868c.198.198.297.297.411.334a.5.5 0 0 0 .31 0c.114-.037.213-.136.41-.334L21.229 7.36c.197-.198.296-.297.333-.412a.5.5 0 0 0 0-.309c-.037-.114-.136-.213-.334-.41l-3.868-3.87c-.198-.197-.297-.296-.412-.334a.5.5 0 0 0-.309 0c-.114.038-.213.137-.41.335L2.357 16.227c-.197.198-.296.297-.334.411a.5.5 0 0 0 0 .31c.038.114.137.213.335.41Z"></path></svg>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Search by Item Form - Hidden by default -->
+    <form asp-route="ProductSearch" method="get" id="item-search-form" class="search-form active" data-form="item">
+        <div class="search-input-group">
+            <input type="text" class="search-box-text" id="small-searchterms" autocomplete="off" name="q" placeholder="@T("Search.SearchBox.Tooltip")" aria-label="@T("Search.SearchBox.Text.Label")" />
+            @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.SearchBoxBeforeSearchButton })
+            <button type="submit" class="button-1 search-box-button">
+                @T("Search.Button")
+            </button>
+        </div>
+
+
+    </form>
+
+    <!-- Search by Dimensions Form - Visible by default -->
+    <form method="get" id="dimension-search-form" class="search-form " data-form="dimension" style="display:none"
+          action="@Url.Action("Index", "RangeAlgoliaSearch")">
+
+        <div id="dimension-messages"></div>
+
+        <input type="hidden" name="searchType" value="dimension" />
+        <input type="hidden" id="dimension-search-query" name="q" value="dimension_search" />
+        
+
+        <div class="dimension-inputs" style="display:none">
+            <!-- Inner Diameter -->
+            <div class="dimension-field">
+                <label for="inner-dimension">Inner Diameter (d)</label>
+                <div class="dimension-mode-toggle">
+                    <button type="button" class="mode-toggle-btn active" data-dimension="inner" data-mode="exact">Exact</button>
+                    <button type="button" class="mode-toggle-btn" data-dimension="inner" data-mode="range">Range</button>
+                </div>
+                <input type="number"
+                       id="inner-dimension"
+                       name="innerDimension"
+                       class="dimension-input"
+                       autocomplete="off"
+                       step="0.001"
+                       min="0"
+                       placeholder="e.g., 25.000">
+                <div class="dimension-range-inputs" id="inner-range-inputs" style="display: none;">
+                    <input type="number"
+                           id="inner-min"
+                           class="dimension-input"
+                           placeholder="Min"
+                           step="0.001"
+                           min="0">
+                    <input type="number"
+                           id="inner-max"
+                           class="dimension-input"
+                           placeholder="Max"
+                           step="0.001"
+                           min="0">
+                </div>
+            </div>
+
+            <!-- Outer Diameter -->
+            <div class="dimension-field">
+                <label for="outer-dimension">Outer Diameter (D)</label>
+                <div class="dimension-mode-toggle">
+                    <button type="button" class="mode-toggle-btn active" data-dimension="outer" data-mode="exact">Exact</button>
+                    <button type="button" class="mode-toggle-btn" data-dimension="outer" data-mode="range">Range</button>
+                </div>
+                <input type="number"
+                       id="outer-dimension"
+                       name="outerDimension"
+                       class="dimension-input"
+                       autocomplete="off"
+                       step="0.001"
+                       min="0"
+                       placeholder="e.g., 52.000">
+                <div class="dimension-range-inputs" id="outer-range-inputs" style="display: none;">
+                    <input type="number"
+                           id="outer-min"
+                           class="dimension-input"
+                           placeholder="Min"
+                           step="0.001"
+                           min="0">
+                    <input type="number"
+                           id="outer-max"
+                           class="dimension-input"
+                           placeholder="Max"
+                           step="0.001"
+                           min="0">
+                </div>
+            </div>
+
+            <!-- Width -->
+            <div class="dimension-field">
+                <label for="width-dimension"> Thickness</label>
+                <div class="dimension-mode-toggle">
+                    <button type="button" class="mode-toggle-btn active" data-dimension="width" data-mode="exact">Exact</button>
+                    <button type="button" class="mode-toggle-btn" data-dimension="width" data-mode="range">Range</button>
+                </div>
+                <input type="number"
+                       id="width-dimension"
+                       name="widthDimension"
+                       class="dimension-input"
+                       autocomplete="off"
+                       step="0.001"
+                       min="0"
+                       placeholder="e.g., 15.000">
+                <div class="dimension-range-inputs" id="width-range-inputs" style="display: none;">
+                    <input type="number"
+                           id="width-min"
+                           class="dimension-input"
+                           placeholder="Min"
+                           step="0.001"
+                           min="0">
+                    <input type="number"
+                           id="width-max"
+                           class="dimension-input"
+                           placeholder="Max"
+                           step="0.001"
+                           min="0">
+                </div>
+
+            </div>
+            <div class="dimension-unit">
+                <label for="measurement-unit">Dimension Unit</label>
+                <select id="measurement-unit" name="dimensionUnit" class="dimension-input">
+                    <option value="mm">MM</option>
+                    <option value="inch">Inch</option>
+                </select>
+            </div>
+        </div>
+
+
+
+        <!-- Weight Filter for Dimension Search -->
+        <div class="weight-filter">
+            <div class="weight-filter-header">
+                <h4>Weight Filter</h4>
+                <div class="weight-toggle" style="display:none">
+                    <input type="checkbox" id="enable-weight-dimension" name="enableWeight"  checked />
+                    <label for="enable-weight-dimension">Filter by Weight</label>
+                </div>
+            </div>
+            <div class="weight-inputs" id="weight-inputs-dimension">
+                <input type="number"
+                       id="weight-min-dimension"
+                       name="weightMin"
+                       class="weight-input"
+                       placeholder="Min weight"
+                       step="0.01"
+                       min="0" />
+                <span class="weight-separator">-</span>
+                <input type="number"
+                       id="weight-max-dimension"
+                       name="weightMax"
+                       class="weight-input"
+                       placeholder="Max weight"
+                       step="0.01"
+                       min="0" />
+                <select id="weight-unit-dimension" name="weightUnit" class="weight-unit-select">
+                   
+                    <option value="kg">Kilograms (kg)</option>
+                  
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" class="dimension-submit-button">
+            <i class="icon-search"></i>
+            Search by Dimensions
+        </button>
+    </form>
+</div>
+
+<script asp-location="Footer">
+    // Debug logging function
+    function logDebug(message) {
+        console.log('[DEBUG] ' + message);
+    }
+
+    // Show message in the form
+    function showMessage(message, type) {
+        var messagesDiv = $('#dimension-messages');
+        var messageClass = type + '-message';
+
+        messagesDiv.html('<div class="message ' + messageClass + '">' + message + '</div>');
+
+        // Auto-hide after 5 seconds
+        setTimeout(function() {
+            messagesDiv.fadeOut(500, function() {
+                $(this).html('');
+            });
+        }, 5000);
+    }
+
+    $(document).ready(function() {
+        logDebug('Document ready - initializing search forms');
+
+        // Tab switching
+        $('.search-tab').click(function(e) {
+            e.preventDefault();
+            var tab = $(this).data('tab');
+            logDebug('Switching to tab: ' + tab);
+
+            $('.search-tab').removeClass('active');
+            $(this).addClass('active');
+            $('.search-form').removeClass('active');
+            $('.search-form[data-form="' + tab + '"]').addClass('active');
+
+            // Focus on the first input
+            setTimeout(function() {
+                $('.search-form.active').find('input[type="text"], input[type="number"]:first').focus();
+            }, 100);
+        });
+
+        // Dimension mode toggle (Exact/Range)
+        $('.mode-toggle-btn').click(function() {
+            var dimension = $(this).data('dimension');
+            var mode = $(this).data('mode');
+
+            // Toggle active state
+            $('.mode-toggle-btn[data-dimension="' + dimension + '"]').removeClass('active');
+            $(this).addClass('active');
+
+            // Show/hide inputs
+            if (mode === 'exact') {
+                $('#' + dimension + '-dimension').show();
+                $('#' + dimension + '-range-inputs').hide();
+
+                // Clear range inputs
+                $('#' + dimension + '-min').val('');
+                $('#' + dimension + '-max').val('');
+
+                // Update hidden field for controller
+                if (dimension === 'inner') {
+                    $('#inner-dimension').attr('name', 'innerDimension');
+                } else if (dimension === 'outer') {
+                    $('#outer-dimension').attr('name', 'outerDimension');
+                } else if (dimension === 'width') {
+                    $('#width-dimension').attr('name', 'widthDimension');
+                }
+            } else {
+                $('#' + dimension + '-dimension').hide();
+                $('#' + dimension + '-range-inputs').show();
+
+                // Clear exact input
+                $('#' + dimension + '-dimension').val('');
+
+                // Remove name attribute so it's not submitted
+                $('#' + dimension + '-dimension').removeAttr('name');
+
+                // For range, we'll handle it in JavaScript
+                logDebug('Range mode selected for ' + dimension);
+            }
+        });
+
+        // Weight filter toggle
+        $('#enable-weight-dimension').change(function() {
+            if ($(this).is(':checked')) {
+                $('#weight-inputs-dimension').addClass('active');
+                $('#weight-min-dimension').focus();
+                logDebug('Dimension weight filter enabled');
+            } else {
+                $('#weight-inputs-dimension').removeClass('active');
+                $('#weight-min-dimension, #weight-max-dimension').val('');
+                logDebug('Dimension weight filter disabled');
+            }
+        });
+
+     
+
+        // Validate numeric input
+        function validateNumericInput(value, fieldName) {
+            if (value === '') return { valid: true };
+
+            var numValue = parseFloat(value);
+            if (isNaN(numValue)) {
+                return { valid: false, message: fieldName + ' must be a valid number' };
+            }
+            if (numValue < 0) {
+                return { valid: false, message: fieldName + ' cannot be negative' };
+            }
+            return { valid: true, value: numValue };
+        }
+
+        // Validate range
+        function validateRange(min, max, fieldName) {
+            if (min === '' && max === '') {
+                return { valid: true };
+            }
+
+            var minValid = validateNumericInput(min, fieldName + ' min');
+            var maxValid = validateNumericInput(max, fieldName + ' max');
+
+            if (!minValid.valid) return minValid;
+            if (!maxValid.valid) return maxValid;
+
+            if (min !== '' && max !== '' && minValid.value > maxValid.value) {
+                return { valid: false, message: fieldName + ' minimum cannot be greater than maximum' };
+            }
+
+            return { valid: true };
+        }
+
+        // Dimension search form submission
+        $('#dimension-search-form').on('submit', function(e) {
+            e.preventDefault();
+            logDebug('Dimension form submission started');
+
+            // Clear previous messages
+            $('#dimension-messages').html('');
+
+            // Collect form data
+               var formData = {
+      searchType: 'dimension',
+      q: 'dimension_search',
+      dimensionUnit: $('#measurement-unit').val(),
+      enableWeight: $('#enable-weight-dimension').is(':checked'),
+      weightUnit: 'kg'
+    };
+
+            // Collect dimension values
+            var hasAnyData = false;
+            var validationErrors = [];
+
+            // Process each dimension
+            var dimensions = ['inner', 'outer', 'width'];
+            dimensions.forEach(function(dimension) {
+                var mode = $('.mode-toggle-btn.active[data-dimension="' + dimension + '"]').data('mode');
+
+                if (mode === 'exact') {
+                    var value = $('#' + dimension + '-dimension').val().trim();
+                    if (value !== '') {
+                        var validation = validateNumericInput(value, dimension + ' dimension');
+                        if (validation.valid) {
+                            formData[dimension + 'Dimension'] = value;
+                            hasAnyData = true;
+                        } else {
+                            validationErrors.push(validation.message);
+                        }
+                    }
+                } else { // range mode
+                    var min = $('#' + dimension + '-min').val().trim();
+                    var max = $('#' + dimension + '-max').val().trim();
+
+                    if (min !== '' || max !== '') {
+                        var validation = validateRange(min, max, dimension + ' dimension');
+                        if (validation.valid) {
+                            // For range, we need to format as "min-max" or send as separate parameters
+                            if (min !== '' && max !== '') {
+                                formData[dimension + 'Dimension'] = min + '-' + max;
+                            } else if (min !== '') {
+                                formData[dimension + 'Dimension'] = min + '-';
+                            } else if (max !== '') {
+                                formData[dimension + 'Dimension'] = '-' + max;
+                            }
+                            hasAnyData = true;
+                        } else {
+                            validationErrors.push(validation.message);
+                        }
+                    }
+                }
+            });
+
+                // Process weight filter if enabled
+    if (formData.enableWeight) {
+        var weightMin = $('#weight-min-dimension').val().trim();
+        var weightMax = $('#weight-max-dimension').val().trim();
+
+        if (weightMin !== '' || weightMax !== '') {
+            var weightValidation = validateRange(weightMin, weightMax, 'weight');
+            if (!weightValidation.valid) {
+                validationErrors.push(weightValidation.message);
+            } else {
+                // ✅ SEND AS-IS (kg), NO sid, NO grams
+                 formData.weightMin = weightMin !== '' ? (parseFloat(weightMin).toString()) : '';
+    formData.weightMax = weightMax !== '' ? (parseFloat(weightMax).toString()) : '';
+
+                formData.weightUnit = $('#weight-unit-dimension').val() || 'kg';
+                hasAnyData = true;
+            }
+        } else {
+            // If enabled but no values, disable it
+            formData.enableWeight = false;
+        }
+    }
+
+
+            // Check if we have any data
+            if (!hasAnyData) {
+                showMessage('Please enter at least one dimension or weight value', 'error');
+                $('#inner-dimension').focus();
+                return false;
+            }
+
+            // Show validation errors if any
+            if (validationErrors.length > 0) {
+                validationErrors.forEach(function(error) {
+                    showMessage(error, 'error');
+                });
+                return false;
+            }
+
+            // Log the data being sent
+            logDebug('Form data to be sent:');
+            for (var key in formData) {
+                logDebug('  ' + key + ': ' + formData[key]);
+            }
+
+            // Build URL parameters
+            var params = [];
+            for (var key in formData) {
+                if (formData[key] !== '' && formData[key] !== null && formData[key] !== undefined) {
+                    params.push(encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]));
+                }
+            }
+
+            // Build final URL
+            var actionUrl = $(this).attr('action');
+            var separator = actionUrl.includes('?') ? '&' : '?';
+            var finalUrl = actionUrl + separator + params.join('&');
+
+            logDebug('Final URL: ' + finalUrl);
+
+            // Show loading indicator
+            var submitButton = $(this).find('.dimension-submit-button');
+            var originalText = submitButton.html();
+            submitButton.html('<i class="icon-spinner icon-spin"></i> Searching...').prop('disabled', true);
+
+            // Redirect to the search results page
+            setTimeout(function() {
+                window.location.href = finalUrl;
+            }, 500);
+
+            return false;
+        });
+
+        // Enter key support in dimension inputs
+        $('.dimension-input, .weight-input').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                $('#dimension-search-form').submit();
+            }
+        });
+
+        // Initialize Algolia autocomplete for item search (if needed)
+        @if (Model.AutoCompleteEnabled)
+        {
+            <text>
+            function getFilters() {
+                var f = [];
+                @if (!catalogSettings.IgnoreStoreLimitations)
+                {
+                    <text>
+                    f.push('(LimitedToStores = 0 OR Stores = @((await storeContext.GetCurrentStoreAsync()).Id))');
+                    </text>
+                }
+
+                var cid = $('#small-search-box-form select[name="cid"]').val() || 0;
+                var mid = $('#small-search-box-form select[name="mid"]').val() || 0;
+                var vid = $('#small-search-box-form select[name="vid"]').val() || 0;
+                if (cid > 0)
+                    f.push('FilterableCategories.Id=' + cid);
+                if (mid > 0)
+                    f.push('FilterableManufacturers.Id=' + mid);
+                if (vid > 0)
+                    f.push('FilterableVendor.Id=' + vid);
+                var filter = f.join(' AND ');
+
+                return filter;
+            }
+
+            try {
+                var client = algoliasearch('@Model.ApplicationId', '@Model.SearchOnlyKey');
+                var index = client.initIndex('@AlgoliaDefaults.DefaultIndexName');
+
+                autocomplete('#small-searchterms', {
+                    hint: false,
+                    minLength: @Model.SearchTermMinimumLength,
+                    autoselect: true
+                }, [{
+                    source: function(query, callback) {
+                        index.search(query, {
+                            hitsPerPage: @Model.AutoCompleteListSize,
+                            filters: getFilters(),
+                            attributesToRetrieve: ['*']
+                        }).then(function(response) {
+                            callback(response.hits);
+                        }).catch(function(error) {
+                            console.error('Algolia search error:', error);
+                            callback([]);
+                        });
+                    },
+                    displayKey: 'title',
+                    templates: {
+                        suggestion: function(suggestion) {
+                            var imageHtml = '';
+                            @if (Model.ShowProductImagesInSearchAutoComplete)
+                            {
+                                <text>
+                                if (suggestion.AutoCompleteImageUrl) {
+                                    imageHtml = '<div class="item-image"><img src="' + suggestion.AutoCompleteImageUrl + '" alt="" /></div>';
+                                }
+                                </text>
+                            }
+
+                            var manufacturerHtml = '';
+                            if (suggestion.FilterableManufacturers &&
+                                suggestion.FilterableManufacturers.length > 0) {
+                                var manufacturer = suggestion.FilterableManufacturers[0];
+                                if (manufacturer && manufacturer.Name) {
+                                    manufacturerHtml = '<div class="item-manufacturer">(' + manufacturer.Name + ')</div>';
+                                }
+                            }
+
+                            var nameHtml = suggestion._highlightResult && suggestion._highlightResult.Name ?
+                                          suggestion._highlightResult.Name.value :
+                                          suggestion.Name || suggestion.Title || 'Product';
+
+                            var dimensionsHtml = '';
+                            if (suggestion.InnerDiameter || suggestion.OuterDiameter || suggestion.Width) {
+                                dimensionsHtml = '<div class="item-dimensions">';
+                                if (suggestion.InnerDiameter) dimensionsHtml += 'ID: ' + suggestion.InnerDiameter + 'mm ';
+                                if (suggestion.OuterDiameter) dimensionsHtml += 'OD: ' + suggestion.OuterDiameter + 'mm ';
+                                if (suggestion.Width) dimensionsHtml += 'W: ' + suggestion.Width + 'mm';
+                                dimensionsHtml += '</div>';
+                            }
+
+                            return '<div class="autocomplete-item">' +
+                                   imageHtml +
+                                   '<div class="item-details">' +
+                                   '<div class="item-name">' + nameHtml + '</div>' +
+                                   manufacturerHtml +
+                                   dimensionsHtml +
+                                   '</div></div>';
+                        },
+                        empty: function(options) {
+                            return '<div class="no-result">No search result for "' + options.query + '".</div>';
+                        }
+                        @if (!Model.HidePoweredByAlgolia)
+                        {
+                            <text>,footer: '<div class="search-footer">Powered by Algolia</div>'</text>
+                        }
+                    }
+                }]).on('autocomplete:selected', function(event, suggestion) {
+                    if (suggestion.Url || suggestion.SeName) {
+                        var url = suggestion.Url || ('@webHelper.GetStoreLocation()' + suggestion.SeName);
+                        window.location.href = url;
+                    }
+                });
+            } catch (error) {
+                console.error('Algolia initialization error:', error);
+            }
+            </text>
+        }
+
+        logDebug('Forms initialized successfully');
+    });
+</script>
+<script>
+    $(document).ready(function () {
+
+        const $tabs = $(".search-tab");
+        const $forms = $(".search-form");
+
+        // زر التابات
+        $tabs.on("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            let target = $(this).data("tab");
+
+         
+            $tabs.removeClass("active");
+            $forms.removeClass("active").hide();
+
+           
+            $(this).addClass("active");
+
+       
+            $('.search-form[data-form="' + target + '"]')
+                .addClass("active")
+                .show();
+        });
+
+     
+        $(document).on("click", function (e) {
+            if (
+                !$(e.target).closest(".search-tabs-container").length &&
+                !$(e.target).closest(".search-form").length
+            ) {
+
+               
+                $tabs.removeClass("active");
+
+               
+                $forms.removeClass("active").hide();
+
+               
+                $('.search-tab[data-tab="item"]').addClass("active");
+                $('#item-search-form').addClass("active").show();
+            }
+        });
+
+    });
+</script>
+
+
+@await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.SearchBox })

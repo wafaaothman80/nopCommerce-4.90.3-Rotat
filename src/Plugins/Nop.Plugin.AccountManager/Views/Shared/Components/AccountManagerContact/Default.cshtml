@@ -1,0 +1,117 @@
+﻿@model dynamic
+
+@{
+    var hasContact =
+        Model != null &&
+        Model.Contact != null &&
+        (
+            !string.IsNullOrWhiteSpace((string)Model.Contact.Name) ||
+            !string.IsNullOrWhiteSpace((string)Model.Contact.Email) ||
+            !string.IsNullOrWhiteSpace((string)Model.Contact.Phone)
+        );
+}
+
+@if (!hasContact)
+{
+    return;
+}
+
+   
+
+<div class="dashboard">
+
+    <div class="topbar">
+        <div>
+            <h2>Hello, @Model.CustomerName!</h2>
+            <small>@Model.CurrentDateTime.ToString("dd.MM.yyyy – HH:mm")</small>
+        </div>
+        <div class="order-value">
+            Current daily order value:
+            <strong>@Model.DailyOrderTotal.ToString("N2") @Model.CurrencyCode</strong>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <div class="card">
+            <h3>Your contact person</h3>
+            <div class="contact">
+                <img src="@Model.Contact.PictureUrl" alt="Contact">
+                <div>
+                    <p><strong>@Model.Contact.Name</strong></p>
+
+                    @{
+                        var email = (string)Model.Contact.Email;
+                        var phone = (string)Model.Contact.Phone;
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(email))
+                    {
+                        <p><a href="mailto:@email">@email</a></p>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(phone))
+                    {
+                        <p><a href="tel:@phone">@phone</a></p>
+                    }
+
+                    <p style="margin-top:8px;font-size:13px;color:#666;">
+                        If you have any questions or other suggestions, please feel free to contact me!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Order history</h3>
+
+            @if (Model.Orders != null && Model.Orders.Count > 0)
+            {
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Order no.</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Service</th>
+                            <th>Tracking</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var o in Model.Orders)
+                        {
+                            <tr>
+                                <td>@o.OrderDate.ToString("dd.MM.yyyy")</td>
+                                <td>@o.OrderNumber</td>
+                                <td>@o.OrderTotal.ToString("N2") @Model.CurrencyCode</td>
+                                <td class="status">@o.Status</td>
+                                <td>@o.ShippingMethod</td>
+                                <td class="tracking">
+                                    @{
+                                        var track = (string)o.TrackingUrl;
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(track))
+                                    {
+                                        <a href="@track">Shipment tracking</a>
+                                    }
+                                    else
+                                    {
+                                        <span>—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p>No orders found.</p>
+            }
+        </div>
+
+    </div>
+</div>
+
+

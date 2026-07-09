@@ -1,0 +1,101 @@
+﻿@model AccountManagerModel
+
+@using Newtonsoft.Json
+
+
+<div class="card-body">
+
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="Email" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="Email" />
+            <span asp-validation-for="Email"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="AccountManagerName" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="AccountManagerName" />
+            <span asp-validation-for="AccountManagerName"></span>
+        </div>
+    </div>
+  
+    
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="Phone" />
+            </div>
+            <div class="col-md-9">
+                <nop-editor asp-for="Phone" />
+                <span asp-validation-for="Phone"></span>
+            </div>
+        </div>
+   
+ 
+
+    
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="SelectedRigionIds" />
+        </div>
+
+        <div class="col-md-9">            
+            <div class="input-group-append input-group-required">
+                <div class="input-group">
+                    <nop-select asp-for="SelectedRigionIds" asp-items="Model.AvailableAccountManagerRigions" asp-multiple="true" />
+                </div>
+                <div class="input-group-btn">
+                    <nop-required />
+                </div>
+            </div>
+            <script>
+                $(function() {
+                    debugger;
+                    var customerRoleIdsInput = $('#@Html.IdFor(model => model.SelectedRigionIds)').select2({
+                        closeOnSelect: false,
+                @if (!Model.AvailableAccountManagerRigions.Any())
+                        {
+                        <text>
+                        disabled: true,
+                            placeholder: '@T("Admin.AccountManager.Fields.SelectedRigionIds")',
+                        </text>
+                        }
+                    });
+                });
+            </script>
+        </div>
+    </div>
+   
+   
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ERPAccountManagerId" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ERPAccountManagerId" />
+            <span asp-validation-for="ERPAccountManagerId"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="Active" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="Active" />
+            <span asp-validation-for="Active"></span>
+        </div>
+    </div>
+    
+
+   
+    
+</div>
+
+<nop-alert asp-alert-id="statesAlert" asp-alert-message="@T("Admin.AccountManager.Alert.States.Failed")" />

@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Payment methods",
+  "FriendlyName": "MastercardGateway",
+  "SystemName": "Payments.MastercardGateway",
+  "Version": "1.10",
+  "SupportedVersions": [ "4.90" ],
+  "Author": "SmartlyTech team",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Payments.MastercardGateway.dll",
+  "Description": " This plugin allows paying with MastercardGateway"
+}

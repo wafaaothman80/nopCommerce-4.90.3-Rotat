@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Shipping",
+  "FriendlyName": "COD Factors",
+  "SystemName": "Factors",
+  "Version": "1.0",
+  "SupportedVersions": [ "4.90" ],
+  "Author": "Smartly",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Factors.dll",
+  "Description": "This plugin allows managing COD factors"
+}

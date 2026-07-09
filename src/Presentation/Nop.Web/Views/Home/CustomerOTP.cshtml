@@ -1,0 +1,454 @@
+﻿
+
+<div class="form-fields otpfild">
+
+    <div class="ver">@T("Verify Mobile Number")</div>
+
+
+    <div class="REN">@T("Type The code you Received on ")<a href="@TempData["UserName"]"> @TempData["UserName"]</a></div>
+
+     <div class="REN">Your OTP @ViewBag.CustomerDBOTP</div>
+
+    <style>
+        .slidpart {
+            display: none;
+        }
+        .buttonsnew {
+            display: inline-block;
+            width: fit-content;
+            margin: 0px 10px;
+        }
+
+            .buttonsnew * {
+                font-size: 12px !important;
+            }
+        /* For Chrome, Safari, Edge, and Opera */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* For Firefox */
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        #inputs input {
+            width: 70px;
+            padding: 14px;
+            border: 2px solid #000 !important;
+            border-radius: 8px;
+            margin-right: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .center-1 {
+            margin-bottom: 50px;
+        }
+
+        span#error-messageOTP, #error-messageOTPs {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #c32026;
+            font-size: 20px;
+            text-transform: capitalize;
+            font-weight: bold;
+            float: left;
+            width: 100%;
+        }
+
+        .container.butopt button {
+            width: 100%;
+            max-width: 158px;
+            border: 0;
+            background-color: #1f278a;
+            padding: 17px;
+            font-size: 15px;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: .3s ease;
+            color: #fff;
+            display: inline
+        }
+
+        .buttons {
+            display: inline;
+        }
+
+        .container.butopt {
+            text-align: center;
+        }
+
+        h1#counter {
+            text-align: center;
+            margin-top: 20px;
+            color: #c32026;
+            font-size: 20px;
+        }
+
+        .form-fields {
+            text-align: center;
+            max-width: 500px;
+            margin: 0 auto;
+            border: 2px solid #000;
+            padding: 30px;
+            border-radius: 25px;
+            border-color: #1f278a !important;
+        }
+        div#inputs {
+            text-align: center;
+        }
+        h3.tstotp {
+            margin-bottom: 20px;
+            color: black;
+            font-size: 20px;
+        }
+
+        .button-1[disabled] {
+            cursor: not-allowed;
+            opacity: .2;
+        }
+
+        .butopt a.login-button2 {
+            width: 100%;
+            max-width: 158px;
+            border: 0;
+            background-color: #1f278a;
+            padding: 18px;
+            font-size: 13px;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: .3s ease;
+            color: #fff;
+            display: inline;
+        }
+
+        .ver {
+            padding: 10px;
+            font-size: 15px;
+            color: #1f278a;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .REN {
+            padding: 10px;
+            font-size: 14px;
+            color: #1f278a;
+            text-transform: capitalize;
+        }
+        .form-fields.otpfild {
+            margin-top:50px !important;
+        }
+        @@media all and (max-width:1200px) {
+            .buttons.lastone {
+                margin-top: 33px;
+                display: block;
+            }
+            .buttonsnew * {
+                font-size: 8px !important;
+            }
+        }
+    </style>
+
+    <div class="container">
+        <div id="inputs" class="inputs">
+            <input class="input" id="txtOTP1" name="txtOTP1" type="number"
+                   inputmode="numeric" maxlength="1" oninput="focusNextInput(this, 'txtOTP2')" />
+            <input class="input" type="number" id="txtOTP2" name="txtOTP2"
+                   inputmode="numeric" maxlength="1" oninput="focusNextInput(this, 'txtOTP3')" />
+            <input class="input" type="number"
+                   inputmode="numeric" maxlength="1" id="txtOTP3" name="txtOTP3" oninput="focusNextInput(this, 'txtOTP4')" />
+            <input class="input" type="number"
+                   inputmode="numeric" maxlength="1" id="txtOTP4" name="txtOTP4" />
+        </div>
+        <h1 id="counter">3:00</h1>
+        <span id="error-messageOTP"></span>
+        <span id="error-messageOTPs" style="display:none">@T("Enter OTP")</span>
+
+
+        <div class="container butopt">
+            <div class="buttonsnew"><button type="button" class="button-1 login-button2" id="confirmOtp">@T("تأكيد") </button></div>
+            <div class="buttonsnew">
+                <button type="button" class="button-1 login-button2" id="REconfirmOtp">@T("إعادة إرسال") </button>
+
+            </div>
+            <div class="buttonsnew lastone">
+                <a href="/RegisterCustomerOTP" type="button" class="button-1 login-button2" id="REWrightNumber">@T("إعادة كتابة رقم التليفون")</a>
+
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+</div>
+<!-- Include jQuery library -->
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+
+
+    debugger;
+    var LastSentOTP='@ViewBag.LastSentOTP'
+    var CID = '@ViewBag.CID';
+    var InvalidOTP = '@T("OTP is wrong")';
+   
+    $("#confirmOtp").click(function () {
+
+        var EnteredOTP = ($('input[name*="txtOTP1"]').val() + $('input[name*="txtOTP2"]').val() + $('input[name*="txtOTP3"]').val() + $('input[name*="txtOTP4"]').val());
+         
+           $.ajax({
+               cache: false,
+               type: "GET",
+                url: "@(Url.Action("ConfirmCustomerOTP", "Home"))",
+                data: {
+                "CID": CID, "OTP": EnteredOTP, NewPhoneNumber: '@TempData["UserName"]'
+
+
+
+
+               },
+               success: function (data, textStatus, jqXHR) {
+                  
+                   if (data=='Done')
+                   {
+                        var protocol = location.protocol;
+                        var slashes = protocol.concat("//");
+                        var host = slashes.concat(window.location.host);
+                        // alert(host + "//Login")
+
+                        window.open(host + "/register", "_self")
+                   }else{
+
+                       $('#error-messageOTP').text(InvalidOTP);
+                       $('#txtOTP1, #txtOTP2, #txtOTP3, #txtOTP4').val('');
+                       document.getElementById('txtOTP1').focus();
+
+                   }
+
+               }
+           });
+
+      
+    });
+
+
+
+
+
+
+
+
+
+
+
+</script>
+<script>
+    function focusNextInput(currentInput, nextInputId) {
+        const maxLength = parseInt(currentInput.getAttribute('maxlength'), 10);
+        const currentLength = currentInput.value.length;
+
+        if (currentLength >= maxLength) {
+            const nextInput = document.getElementById(nextInputId);
+
+            if (nextInput) {
+                nextInput.focus();
+            }
+        }
+    }
+</script>
+
+
+
+
+
+
+
+
+
+<!-- Your HTML and existing script -->
+
+<script>
+    $(document).ready(function () {
+        // استهداف حقول الإدخال وزر التأكيد باستخدام jQuery
+        var otpInputs = $('.input');
+        var confirmButton = $('#confirmOtp');
+
+        // إضافة استماع للتحقق من النقر على زر التأكيد
+        confirmButton.on('click', function () {
+            // التحقق من أن جميع حقول الإدخال مملوءة
+            var isFilled = true;
+            otpInputs.each(function () {
+                if ($(this).val().trim() === '') {
+                    isFilled = false;
+                    return false; // توقف الفحص عند العثور على حقل فارغ
+                }
+            });
+
+            // عرض تنبيه إذا لم تكن جميع حقول الإدخال مملوءة
+            if (!isFilled) {
+                $("#error-messageOTPs").css("display", "block");
+
+            }
+        });
+    });
+</script>
+<script>
+    // Function to focus on the next input field
+    function focusNextInput(currentInput, nextInputId) {
+        // Ensure the current input has a valid number
+        if (currentInput.value.length === 1) {
+            document.getElementById(nextInputId).focus();
+        }
+        // Check if all inputs are filled
+        checkOtpFilled();
+    }
+
+    // Function to check if all OTP inputs are filled
+    function checkOtpFilled() {
+        // Get the values of all OTP inputs
+        const otp1 = document.getElementById('txtOTP1').value;
+        const otp2 = document.getElementById('txtOTP2').value;
+        const otp3 = document.getElementById('txtOTP3').value;
+        const otp4 = document.getElementById('txtOTP4').value;
+
+        // Check if all fields have values (i.e., OTP is complete)
+        if (otp1 && otp2 && otp3 && otp4) {
+            // If complete, automatically trigger the click event for the confirm button
+            document.getElementById('confirmOtp').click();
+        }
+    }
+
+    // Adding event listeners to inputs to allow only one digit
+    document.querySelectorAll('.input').forEach(input => {
+        input.addEventListener('input', function () {
+            if (this.value.length > 1) {
+                this.value = this.value.slice(0, 1); // Keep only one digit
+            }
+        });
+    });
+
+    
+
+    // Simulate OTP confirmation when the confirm button is clicked
+    document.getElementById('confirmOtp').addEventListener('click', function () {
+        // Simulate confirmation action (e.g., form submission or alert)
+
+    });
+
+    // Focus on the first input when the page is loaded
+    window.onload = function () {
+        document.getElementById('txtOTP1').focus();
+    };
+</script>
+
+
+
+
+
+<script>
+    $(document).ready(function () {
+        $('.input').on('keypress', function (e) {
+            // السماح فقط بالأرقام (0-9)
+            if (e.which < 48 || e.which > 57) {
+                e.preventDefault(); // منع الإدخال
+            }
+        });
+
+        // التحقق أيضًا أثناء إدخال النصوص (للصق مثلاً)
+        $('.input').on('input', function () {
+            const value = $(this).val();
+            if (/[^0-9]/.test(value)) {
+                $(this).val(value.replace(/[^0-9]/g, '')); // إزالة أي حروف غير رقمية
+            }
+        });
+    });
+</script>
+
+<script>
+    // Focus next input when typing in current input
+    function focusNextInput(currentInput, nextInputId) {
+        if (currentInput.value.length === currentInput.maxLength) {
+            document.getElementById(nextInputId).focus();
+        }
+    }
+
+    // Add event listener to each OTP field to check if all inputs are filled
+    const otpInputs = document.querySelectorAll('.input');
+    otpInputs.forEach(function (input, index) {
+        input.addEventListener('input', function () {
+            // Check if all inputs have values
+            const allFilled = Array.from(otpInputs).every(input => input.value.length === 1);
+
+            // If all inputs are filled, trigger the confirm button click
+            if (allFilled) {
+                document.getElementById('confirmOtp').click(); // Trigger confirm button click
+            }
+        });
+    });
+</script>
+<script>
+    // Function to focus the next input field
+    function focusNextInput(currentInput, nextInputId) {
+        if (currentInput.value.length === currentInput.maxLength) {
+            document.getElementById(nextInputId).focus();
+        }
+    }
+
+    // Auto-focus on the first OTP field when the page loads
+    window.onload = function () {
+        document.getElementById('txtOTP1').focus();
+    };
+</script>
+<script>
+    function startCounter(durationInSeconds) {
+        let timer = durationInSeconds;
+        const counterElement = document.getElementById('counter');
+        const confirmOtpButton = document.getElementById('REconfirmOtp');
+
+        // Disable the confirmOtpButton at the beginning
+        confirmOtpButton.disabled = true;
+
+        const countdown = setInterval(function () {
+            const minutes = Math.floor(timer / 60);
+            const seconds = timer % 60;
+
+            counterElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            if (timer <= 0) {
+                clearInterval(countdown);
+                counterElement.textContent = "OTP is not valid Or Expired.";
+
+                // Enable the confirmOtpButton after the countdown
+                confirmOtpButton.disabled = false;
+            } else {
+                timer--; // Decrease the timer by 1 second
+            }
+        }, 1000);
+
+        // Add a click event listener to the confirmOtpButton
+        confirmOtpButton.addEventListener('click', function () {
+            // Redirect to a new URL
+            var newUrl = window.location.origin + window.location.pathname + "?key=REconfirmOtp";
+            window.location.href = newUrl;
+        });
+    }
+
+    // Set the duration in seconds (3 minutes = 180 seconds)
+    const durationInSeconds = 180;
+
+    // Start the counter when the page loads
+    window.onload = function () {
+        document.getElementById('txtOTP1').focus();
+        startCounter(durationInSeconds);
+    };
+</script>

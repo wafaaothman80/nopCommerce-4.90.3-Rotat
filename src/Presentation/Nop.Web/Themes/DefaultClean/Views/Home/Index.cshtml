@@ -1,0 +1,299 @@
+@using Nop.Services.Localization
+@using Nop.Core
+@inject ILocalizationService localizationService
+@inject IStoreContext storeContext
+@{
+    Layout = "_ColumnsOne";
+    var homepageTitle = await localizationService.GetLocalizedAsync(await storeContext.GetCurrentStoreAsync(), s => s.HomepageTitle);
+    //title
+    if (!string.IsNullOrEmpty(homepageTitle))
+    {
+        NopHtml.AddTitleParts(homepageTitle);
+    }
+    var homepageDescription = await localizationService.GetLocalizedAsync(await storeContext.GetCurrentStoreAsync(), s => s.HomepageDescription);
+    //meta
+    if (!string.IsNullOrEmpty(homepageDescription))
+    {
+        NopHtml.AddMetaDescriptionParts(homepageDescription);
+    }
+    //page class
+    NopHtml.AppendPageCssClassParts("html-home-page");
+}
+<div class="page home-page">
+    <div class="page-body">
+        <style>
+            .adstop td.td1 {
+                padding-right: 10px;
+            }
+            .adstop td.td2 {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+            .adstop td.td3 {
+                padding-left: 10px;
+            }
+        </style>
+        <table class="adstop" style="border-collapse:collapse;width:100.051%" border="0">
+            <tbody>
+                <tr>
+                    <td style="width:31.5657%;text-align:left" class="td1">
+                        @*<img src="/images/uploaded/smallads22.png" alt="" width="90%">*@
+                        @await Component.InvokeAsync("Widget", new { widgetZone = "topads1" })
+                    </td>
+                    <td style="width:31.5657%;text-align:center" class="td2">
+                        @await Component.InvokeAsync("Widget", new { widgetZone = "topads2" })
+                    </td>
+                    <td style="width:31.5657%;text-align:right" class="td3">
+                        @await Component.InvokeAsync("Widget", new { widgetZone = "topads3" })
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <style>
+            /* Main wrapper */
+            .dashboard {
+                padding: 0 !IMPORTANT;
+                margin: auto;
+                background: #fff;
+                border-radius: 6px;
+            }
+            /* Top bar */
+            .topbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border: 1px solid #ddd;
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+                background: #fff;
+                border-radius: 16px;
+                padding:20px 25px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, .05);
+                margin-top: 10px;
+            }
+                .topbar h2 {
+                    margin: 0;
+                    font-size: 20px;
+                    color: #1f278a;
+                }
+            .order-value strong {
+                color: #1f278a;
+            }
+                .topbar small {
+                    color: #777;
+                }
+            .order-value {
+                font-size: 14px;
+                color: #555;
+            }
+            /* Layout */
+            .content {
+                display: grid;
+                grid-template-columns: 1fr 2fr;
+                gap: 20px;
+            }
+            /* Cards */
+            .card {
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                padding: 15px;
+            }
+                .card h3 {
+                    margin-top: 0;
+                    font-size: 16px;
+                    margin-bottom: 15px;
+                    color: #1f278a;
+                }
+            /* Contact */
+            .contact {
+                display: flex;
+                gap: 15px;
+                align-items: center;
+            }
+                .contact img {
+                    width: 60px;
+                    height: 60px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    background: #ccc;
+                }
+                .contact p {
+                    margin: 4px 0;
+                    font-size: 14px;
+                }
+            /* Table */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 14px;
+            }
+            th, td {
+                padding: 10px;
+                border-bottom: 1px solid #eee;
+                text-align: left;
+            }
+            th {
+                background: #f7f7f7;
+                font-weight: bold;
+            }
+            .status {
+                font-weight: bold;
+            }
+                .status.dispatched {
+                    color: #f39c12;
+                }
+                .status.delivered {
+                    color: #27ae60;
+                }
+                .status.cancelled {
+                    color: #c0392b;
+                }
+            .tracking a {
+                color: #1f278a;
+                text-decoration: none;
+                font-size: 13px;
+            }
+            /* =========================
+   Responsive
+========================= */
+@@media (max-width: 992px) {
+    .content {
+        grid-template-columns: 1fr; /* عمود واحد */
+    }
+}
+@@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    .dashboard {
+        padding: 15px;
+    }
+    /* Top bar */
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                text-align: left;
+            }
+    .topbar h2 {
+        font-size: 18px;
+    }
+    .order-value {
+        font-size: 13px;
+    }
+    /* Contact */
+    .contact {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+    .contact img {
+        width: 50px;
+        height: 50px;
+    }
+    /* Table wrapper */
+    .card table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+@@media (max-width: 480px) {
+    .topbar h2 {
+        font-size: 16px;
+    }
+    .card h3 {
+        font-size: 15px;
+    }
+    th, td {
+        padding: 8px;
+        font-size: 13px;
+    }
+    .tracking a {
+        font-size: 12px;
+    }
+}
+        </style>
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageTop })
+        @await Component.InvokeAsync(typeof(TopicBlockViewComponent), new { systemName = "HomepageText" })
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBeforeCategories })
+        @await Component.InvokeAsync(typeof(HomepageCategoriesViewComponent))
+        @await Component.InvokeAsync(typeof(FilterLevelValueSearchViewComponent))
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBeforeProducts })
+        <div class="prisma-banners-3-widget-zone">
+            @await Component.InvokeAsync("Widget", new { widgetZone = "prisma_banners_3_widget_zone" })
+        </div>
+        <div class="prisma-banners-2-widget-zone">
+            @await Component.InvokeAsync("Widget", new { widgetZone = "prisma_banners_2_widget_zone" })
+        </div>
+        @await Component.InvokeAsync(typeof(HomepageProductsViewComponent))
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBeforeBestSellers })
+        @await Component.InvokeAsync(typeof(HomepageBestSellersViewComponent))
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBeforeNews })
+        @await Component.InvokeAsync(typeof(HomepageNewsViewComponent))
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBeforePoll })
+        @await Component.InvokeAsync(typeof(HomepagePollsViewComponent))
+        <div class="two-colums-wrapper">
+            @*@await Component.InvokeAsync("Widget", new { widgetZone = "prisma_home_page_two_columns" })*@
+        </div>
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBottom })
+        <div class="news"></div>
+        @await Component.InvokeAsync("Widget", new { widgetZone = "prisma_home_page_two_columns" })
+        <div class="buttomdiv"></div>
+    </div>
+</div>
+<style>
+    .floating-wpp {
+        z-index: 100000000000000000000000000000000;
+        position: fixed;
+        bottom: 154px;
+        right: 15px;
+        font-size: 14px;
+        transition: bottom 0.2s;
+    }
+</style>
+<script>
+    $(document).ready(function () {
+        var divToMove = $('.news-list-homepage').detach(); // إزالة الديف من مكانها الأصلي
+        $('.news').append(divToMove); // إضافة الديف إلى المكان الجديد
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        var divToMove = $('.footerblock').detach(); // إزالة الديف من مكانها الأصلي
+        $('.buttomdiv').append(divToMove); // إضافة الديف إلى المكان الجديد
+    });
+</script>
+<style>
+    @@media (min-width: 992px) {
+        /* اعملي فورس عرض كامل لكل slides */
+        .catagoei .slick-slide,.brand .slick-slide{
+            width: 100% !important;
+            justify-content: center;
+        }
+        /* خلى التراك يمدد نفسه */
+        .catagoei .slick-track,.brand .slick-track{
+            display: flex !important;
+            width: 100% !important;
+        }
+        /* خلى الليست تاخد عرض الكونتينر كله */
+        .catagoei .slick-list,.brand .slick-list {
+            width: 100% !important;
+            overflow: hidden;
+        }
+        /* الكاروسيل نفسه */
+        .catagoei,.brand {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .brand {
+            max-width: 70% !important;
+        }
+        .home-page-body .catagoei .category-item {
+            margin-bottom: 30px;
+        }
+        .brand .title.carousel-title {
+            margin-bottom: 0 !important;
+        }
+    }
+</style>

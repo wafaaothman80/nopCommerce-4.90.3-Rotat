@@ -1,0 +1,9 @@
+﻿4.80.1.1 Initial release
+4.80.1.2 MPN added as a searchable attribute
+4.80.1.3: Bulk update exception issue fixed
+4.80.1.4: Updatable table insert query moved to linq2db instead of raw SQL query and UpdatedOnUtc column is now set to current utc time,
+          Only products related to corresponding changes in category, vendor and manufacturer are updated in updatable table
+4.80.1.5: Bulk update exception issue during upload items bug fixed
+4.80.1.6: Logger added to trace which product batch has been uploaded to algolia
+4.80.1.8: Fix Price filter issue on Algolia search result
+4.90.1.0: Version upgraded

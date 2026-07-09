@@ -1,0 +1,25 @@
+@model MenuItemModel
+
+<li>
+    @if (Model.ChildrenItems.Any())
+    {
+        @await Html.PartialAsync("_MenuItem.cshtml", Model)
+        <div class="plus-button"></div>
+        <div class="sublist-wrap">
+            <ul class="sublist">
+                <li class=" navigation-wrapper">
+                    <div class="close-menu"><span>close</span></div>
+                    <div class="back-button"><span>Back</span></div>
+                </li>
+                @foreach (var item in Model.ChildrenItems)
+                {
+                    @await Html.PartialAsync("_MenuItem.List.cshtml", item)
+                }
+            </ul>
+        </div>
+    }
+    else
+    {
+        @await Html.PartialAsync("_MenuItem.cshtml", Model)
+    }
+</li>

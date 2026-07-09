@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Language Name="EN">
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.ContinueWithoutLogin">
+		<Value>Continue without login</Value>
+	</LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.AlreadyHaveAccount">
+		<Value>Already have an account? Log In</Value>
+	</LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.Impersonate">
+		<Value>Impersonate</Value>
+	</LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.CustomerInfo.Updated">
+		<Value>Your customer info has been updated.</Value>
+	</LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.Topic.Created">
+		<Value>Topic is successfully created.</Value>
+	</LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.Topic.Updated">
+		<Value>The topic has been updated successfully.</Value>
+	</LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.Post.Created">
+		<Value>Your comment has been posted.</Value>
+	</LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.PrivateMessage.Select">
+		<Value>Please select a message</Value>
+	</LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.PrivateMessage.Sent">
+		<Value>Message sent successfully.</Value>
+	</LocaleResource>
+	<LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.ShareWishlist">
+		<Value>Share Wishlist</Value>
+	</LocaleResource>
+    <LocaleResource Name="nopadvance.plugin.publicapi.defaultclean.shopbycategory">
+        <Value>Shop by Category</Value>
+    </LocaleResource>
+    <LocaleResource Name="nopadvance.plugin.publicapi.defaultclean.productattribute">
+        <Value>Product attributes</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.ShareWishlist">
+        <Value>Share Wishlist</Value>
+    </LocaleResource>
+    <LocaleResource Name="nopadvance.plugin.publicapi.defaultclean.skip">
+        <Value>Skip</Value>
+    </LocaleResource>
+    <LocaleResource Name="nopadvance.plugin.publicapi.defaultclean.donthaveaccount">
+        <Value>Don't have an account?</Value>
+    </LocaleResource>
+    <LocaleResource Name="nopadvance.plugin.publicapi.defaultclean.gotohomepage">
+        <Value>Go To Home Page</Value>
+    </LocaleResource>
+    <LocaleResource Name="nopadvance.plugin.publicapi.defaultclean.signinforbetterexperience">
+        <Value>Sign in for the best experience</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.ContinueWithoutLogin">
+        <Value>Continue without login</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.AlreadyHaveAccount">
+        <Value>Already have an account? Log In</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.Impersonate">
+        <Value>Impersonate</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.CustomerInfo.Updated">
+        <Value>Your customer info has been updated.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.Topic.Created">
+        <Value>Topic is successfully created.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.Topic.Updated">
+        <Value>The topic has been updated successfully.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.Post.Created">
+        <Value>Your comment has been posted.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.PrivateMessage.Select">
+        <Value>Please select a message</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopAdvance.Plugin.PublicAPI.DefaultClean.PrivateMessage.Sent">
+        <Value>Message sent successfully.</Value>
+    </LocaleResource>
+</Language>

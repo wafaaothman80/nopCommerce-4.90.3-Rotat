@@ -1,0 +1,83 @@
+﻿@model RigionModel
+
+@using Newtonsoft.Json
+
+
+<div class="card-body">
+
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="RigionName" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="RigionName" />
+            <span asp-validation-for="RigionName"></span>
+        </div>
+    </div>
+
+   
+  
+    
+   
+ 
+
+    
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="SelectedCountryIds" />
+        </div>
+
+        <div class="col-md-9">            
+            <div class="input-group-append input-group-required">
+                <div class="input-group">
+                    <nop-select asp-for="SelectedCountryIds" asp-items="Model.AvailableRigionCountries" asp-multiple="true" />
+                </div>
+                <div class="input-group-btn">
+                    <nop-required />
+                </div>
+            </div>
+            <script>
+                $(function() {
+                    debugger;
+                    var customerRoleIdsInput = $('#@Html.IdFor(model => model.SelectedCountryIds)').select2({
+                        closeOnSelect: false,
+                @if (!Model.AvailableRigionCountries.Any())
+                        {
+                        <text>
+                        disabled: true,
+                            placeholder: '@T("Admin.Rigion.Fields.SelectedCountryIds")',
+                        </text>
+                        }
+                    });
+                });
+            </script>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="DisplayOrder" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="DisplayOrder" />
+            <span asp-validation-for="DisplayOrder"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="Active" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="Active" />
+            <span asp-validation-for="Active"></span>
+        </div>
+    </div>
+    
+
+   
+    
+</div>
+
+<nop-alert asp-alert-id="statesAlert" asp-alert-message="@T("Admin.Rigion.Alert.States.Failed")" />

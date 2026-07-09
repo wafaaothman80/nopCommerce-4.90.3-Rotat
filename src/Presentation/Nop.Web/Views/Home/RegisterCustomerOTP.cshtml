@@ -1,0 +1,264 @@
+﻿
+
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    NopHtml.AddTitleParts(T("PageTitle.Register").Text);
+    //page class
+    NopHtml.AppendPageCssClassParts("html-registration-page");
+
+}
+@if (ViewBag.CheckUserName != null)
+{
+    <span class="errordup" style="font-weight: bold;color:#f00;text-align:center;width: 100%;display: block;margin-bottom: 12px;">@T("account.emailusernameerrors.usernamealreadyexists") (@ViewBag.PhoneNumber )</span>
+}
+<style>
+    form.otpform {
+        margin-top: 100px !important;
+    }
+
+        form.otpform input.butop {
+            MARGIN-TOP: 10PX !important;
+            border: 0;
+            background: #1f278a;
+            padding: 14px 39px;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 14px;
+            color: #fff;
+        }
+
+    .slidpart {
+        display: none;
+    }
+
+    form.otpform {
+        width: 500px;
+        text-align: center;
+        margin: 0 auto;
+        display: block;
+        align-content: center;
+        justify-content: center;
+        align-items: center;
+        background-color: #f7f7f8;
+        border-radius: 12px !important;
+        border: 0 !important;
+        padding: 20px;
+    }
+
+        form.otpform span {
+            display: block !important;
+        }
+
+            form.otpform span.titel {
+                font-size: 21px;
+                font-weight: bold;
+            }
+
+    .iti .iti__selected-dial-code {
+        margin-left: 4px;
+        FONT-SIZE: 18PX !IMPORTANT;
+    }
+
+    input#PhoneNumber {
+        border-radius: 23px !important;
+        MIN-WIDTH: 300PX;
+    }
+
+    form.otpform span.titel {
+        margin-bottom: 10px;
+    }
+</style>
+<style>
+    .phonelock h4 {
+        HEIGHT: 45PX;
+        WIDTH: 20%;
+        FONT-SIZE: 12PX;
+        DISPLAY: inline;
+        BORDER: 0;
+        float: left;
+        vertical-align: middle;
+        border-radius: 4px;
+        line-height: 45px;
+        text-align: center !important;
+        border-right: 0;
+        border-bottom-right-radius: 0;
+        border-top-right-radius: 0;
+        direction: ltr;
+    }
+
+    .phonelock input#PhoneNumber {
+        WIDTH: 80%;
+        MARGIN-LEFT: 0;
+        BORDER-LEFT: 0 !IMPORTANT;
+        border-bottom-left-radius: 0;
+        border-top-left-radius: 0;
+        direction: ltr;
+    }
+
+    .phonelock svg {
+        position: relative;
+        top: 4px;
+        left: 3px;
+    }
+
+    div#inputs {
+        text-align: center;
+    }
+
+    @@media all and (max-width:760px) {
+        form.otpform {
+            width: AUTO;
+        }
+    }
+
+    .butop:disabled {
+        background-color: #d6d6d6;
+        color: #a1a1a1;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+</style>
+<link rel="stylesheet" type="text/css" href="/Themes/Prisma/Content/scripts/intlTelInput.css" />
+<form class="otpform" asp-controller="Home" asp-action="RegisterCustomerOTP">
+
+    <span class="titel">
+        @T("من فضلك إدخل رقم الهاتف")
+
+    </span>
+    <div class="phonelockK">
+        <input type="hidden" id="CodePhoneNumber" name="CodePhoneNumber" value="">
+
+
+        <input type="tel" id="PhoneNumber" class="bxinputotp" name="PhoneNumber" data-intl-tel-input-id="0" title="@T("يرجى إدخال رقم الهاتف الصحيح")" oninvalid="this.setCustomValidity('@T("يرجى إدخال رقم الهاتف الصحيح")') " oninput="setCustomValidity('')" maxlength="15" placeholder="Phone Number"><br>
+    </div>
+
+    <input type="submit" value="@T("Submit")" class="butop" id="submitButton" disabled>
+    <P class="field-validation-error otperroe" style="display: none;text-align: center;margin-top: 10px !important;">@T("يرجى إدخال رقم الهاتف الصحيح")</P>
+
+</form>
+
+
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script type="text/javascript" src="/Themes/Prisma/Content/scripts/intlTelInput.js"></script>
+
+<script>
+    $(document).ready(function () {
+        var input = document.querySelector("#PhoneNumber");
+        window.intlTelInput(input, {
+            onlyCountries: ['AE'], // السماح فقط بالإمارات
+            separateDialCode: true,
+            initialCountry: "AE", // تعيين الإمارات كدولة افتراضية
+            utilsScript: "/Themes/Prisma/Content/scripts/utils.js"
+        });
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        $('#PhoneNumber').on('input', function () {
+            var value = $(this).val();
+
+            // If the number starts with '0', remove the leading zero
+            if (value.startsWith('0')) {
+                $(this).val(value.substring(1)); // Remove the leading zero
+                this.setCustomValidity('يرجى إدخال رقم الهاتف الصحيح');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    });
+    $("#otpform").on("beforeSubmit", function (event) {
+        debugger;
+        event.preventDefault();
+        var code = $('.iti__selected-dial-code').html().replace('+', '');
+        alert(code);
+
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        // إنشاء المراقب
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                // عند التغيير في النص داخل الـ div
+                // alert($('.iti__selected-dial-code').text());
+
+                $('#CodePhoneNumber').val($('.iti__selected-dial-code').text().replace('+', ''));
+
+            });
+        });
+
+        // الإعدادات لمراقبة التغييرات
+        const config = { childList: true, subtree: true };
+
+        // استهداف العنصر الذي يحتوي على القيمة
+        const targetNode = document.querySelector('.iti__selected-dial-code');
+
+        // بدء المراقبة
+        observer.observe(targetNode, config);
+
+    });
+
+</script>
+<script>
+    document.getElementById('PhoneNumber').addEventListener('input', function (e) {
+        // Remove any non-numeric characters
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+</script>
+@*<script type="text/javascript">
+        const phoneInput = document.getElementById('PhoneNumber');
+        const submitButton = document.getElementById('submitButton');
+
+        phoneInput.addEventListener('input', () => {
+            // إذا كان الحقل يحتوي على بيانات، اجعل الزر قابلًا للضغط
+            if (phoneInput.value.trim() !== "") {
+                submitButton.disabled = false;
+            } else {
+                // إذا كان الحقل فارغًا، اجعل الزر غير قابل للضغط
+                submitButton.disabled = true;
+            }
+        });
+    </script>*@
+<script type="text/javascript">
+    const phoneInput = document.getElementById('PhoneNumber');
+    const submitButton = document.getElementById('submitButton');
+
+    phoneInput.addEventListener('input', () => {
+        // إزالة أي مسافات زائدة وحساب طول المدخلات
+        const inputLength = phoneInput.value.trim().length;
+
+        // التحقق من أن الحقل غير فارغ وأن عدد الأرقام 8 على الأقل
+        if (inputLength >= 9) {
+            submitButton.disabled = false;
+        } else {
+            submitButton.disabled = true;
+        }
+    });
+</script>
+<script type="text/javascript">
+    $("#PhoneNumber").keyup(function () {
+        var value = $(this).val();
+        value = value.replace(/^(0*)/, "");
+        $(this).val(value);
+    });
+</script>
+<script>
+    document.getElementById("PhoneNumber").addEventListener("input", function (event) {
+        // Get the input value
+        let inputValue = event.target.value;
+
+        // Remove non-numeric characters
+        let numericValue = inputValue.replace(/\D/g, "");
+
+        // Update the input field value
+        event.target.value = numericValue;
+    });
+</script>

@@ -1,0 +1,122 @@
+@model Nop.Plugin.Shipping.ShipmentMergeDiscount.Models.ConfigurationModel
+
+@{
+    Layout = "_ConfigurePlugin";
+}
+
+<form asp-controller="ShipmentMergeDiscount" asp-action="Settings" method="post">
+    <div asp-validation-summary="All"></div>
+
+    <div class="cards-group">
+        <div class="card card-default">
+            <div class="card-body">
+
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-override-store-checkbox asp-for="Enabled_OverrideForStore"
+                                                     asp-input="Enabled"
+                                                     asp-store-scope="Model.ActiveStoreScopeConfiguration" />
+                        <nop-label asp-for="Enabled" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="Enabled" />
+                        <span asp-validation-for="Enabled"></span>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-override-store-checkbox asp-for="MinimumEligibleOrders_OverrideForStore"
+                                                     asp-input="MinimumEligibleOrders"
+                                                     asp-store-scope="Model.ActiveStoreScopeConfiguration" />
+                        <nop-label asp-for="MinimumEligibleOrders" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="MinimumEligibleOrders" />
+                        <span asp-validation-for="MinimumEligibleOrders"></span>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-override-store-checkbox asp-for="StrictAddressMatch_OverrideForStore"
+                                                     asp-input="StrictAddressMatch"
+                                                     asp-store-scope="Model.ActiveStoreScopeConfiguration" />
+                        <nop-label asp-for="StrictAddressMatch" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="StrictAddressMatch" />
+                        <span asp-validation-for="StrictAddressMatch"></span>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-override-store-checkbox asp-for="UsePercentage_OverrideForStore"
+                                                     asp-input="UsePercentage"
+                                                     asp-store-scope="Model.ActiveStoreScopeConfiguration" />
+                        <nop-label asp-for="UsePercentage" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="UsePercentage" />
+                        <span asp-validation-for="UsePercentage"></span>
+                    </div>
+                </div>
+
+                <div class="form-group row" id="pnl-discount-percentage">
+                    <div class="col-md-3">
+                        <nop-override-store-checkbox asp-for="DiscountPercentage_OverrideForStore"
+                                                     asp-input="DiscountPercentage"
+                                                     asp-store-scope="Model.ActiveStoreScopeConfiguration" />
+                        <nop-label asp-for="DiscountPercentage" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="DiscountPercentage" />
+                        <span asp-validation-for="DiscountPercentage"></span>
+                    </div>
+                </div>
+
+                <div class="form-group row" id="pnl-discount-amount">
+                    <div class="col-md-3">
+                        <nop-override-store-checkbox asp-for="DiscountAmount_OverrideForStore"
+                                                     asp-input="DiscountAmount"
+                                                     asp-store-scope="Model.ActiveStoreScopeConfiguration" />
+                        <nop-label asp-for="DiscountAmount" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="DiscountAmount" />
+                        <span asp-validation-for="DiscountAmount"></span>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-override-store-checkbox asp-for="MaxDiscountAmount_OverrideForStore"
+                                                     asp-input="MaxDiscountAmount"
+                                                     asp-store-scope="Model.ActiveStoreScopeConfiguration" />
+                        <nop-label asp-for="MaxDiscountAmount" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="MaxDiscountAmount" />
+                        <span asp-validation-for="MaxDiscountAmount"></span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" name="save" class="btn btn-primary">@T("Admin.Common.Save")</button>
+</form>
+
+<script>
+    function toggleDiscountFields() {
+        var usePercentage = $('#@Html.IdFor(m => m.UsePercentage)').is(':checked');
+        $('#pnl-discount-percentage').toggle(usePercentage);
+        $('#pnl-discount-amount').toggle(!usePercentage);
+    }
+    $(function () {
+        toggleDiscountFields();
+        $('#@Html.IdFor(m => m.UsePercentage)').on('change', toggleDiscountFields);
+    });
+</script>

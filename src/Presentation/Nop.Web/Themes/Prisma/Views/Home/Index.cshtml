@@ -1,0 +1,880 @@
+﻿@using Nop.Services.Localization
+@using Nop.Core
+@inject ILocalizationService localizationService
+@inject IStoreContext storeContext
+<script src="https://cdn.tailwindcss.com"></script>
+@*<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">*@
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    body {
+        font-family: 'Inter', sans-serif;
+    }
+
+    .hero-bg {
+        background-color: #1a237e;
+        background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.05) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(255,255,255,0.05) 0%, transparent 20%);
+    }
+
+    .search-box {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .category-card {
+        transition: all 0.3s ease;
+    }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+        }
+
+    .brand-logo {
+        filter: grayscale(100%);
+        opacity: 0.5;
+        transition: all 0.3s;
+    }
+
+        .brand-logo:hover {
+            filter: grayscale(0%);
+            opacity: 1;
+        }
+    html.html-home-page div#main {
+        padding: 0
+    }
+       .container {
+       display: grid;
+       grid-template-columns: 280px repeat(3, 1fr);
+       grid-template-rows: repeat(2, 1fr);
+       gap: 20px;
+       max-width: 1200px;
+       width: 100%;
+   }
+
+   /* Base Card Style */
+   .card {
+       background: white;
+       border-radius: var(--border-radius);
+       overflow: hidden;
+       display: flex;
+       flex-direction: column;
+       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+       transition: transform 0.3s ease;
+       cursor: pointer;
+       position: relative;
+   }
+
+   .card:hover {
+       transform: translateY(-5px);
+   }
+
+   /* Diagonal Stripes Pattern */
+   .stripes-overlay {
+       height: 180px;
+       background: repeating-linear-gradient(
+           45deg,
+           #e5e7eb,
+           #e5e7eb 10px,
+           #f3f4f6 10px,
+           #f3f4f6 20px
+       );
+       position: relative;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+   }
+
+   .stripes-overlay::after {
+       content: '';
+       position: absolute;
+       top: 15px;
+       right: 15px;
+       width: 40px;
+       height: 40px;
+       border: 2px solid rgba(0, 0, 0, 0.1);
+       border-radius: 50%;
+       background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.05) 45%);
+   }
+
+   .placeholder-text {
+       font-size: 10px;
+       color: rgba(0, 0, 0, 0.3);
+       text-transform: uppercase;
+       letter-spacing: 1px;
+       font-weight: bold;
+       position: absolute;
+       bottom: 10px;
+   }
+
+   /* Content Section */
+   .card-content {
+       padding: 20px;
+       flex-grow: 1;
+       display: flex;
+       flex-direction: column;
+       justify-content: space-between;
+       position: relative;
+   }
+
+   .card-title {
+       font-size: 18px;
+       font-weight: 700;
+       color: var(--dark-blue);
+       margin: 0 0 5px 0;
+   }
+
+   .card-desc {
+       font-size: 13px;
+       color: var(--text-gray);
+       margin-bottom: 20px;
+   }
+
+   .card-sku {
+       font-size: 12px;
+       color: #9ca3af;
+       font-weight: 500;
+   }
+
+   .arrow-icon {
+       position: absolute;
+       top: 20px;
+       right: 20px;
+       color: var(--dark-blue);
+       font-size: 18px;
+   }
+
+   /* Featured Tall Card (Bearings) */
+   .card-featured {
+       grid-row: span 2;
+       background-color: var(--dark-blue);
+       color: white;
+   }
+
+   .card-featured .stripes-overlay {
+       height: 100%;
+       background: repeating-linear-gradient(
+           45deg,
+           #0f172a,
+           #0f172a 10px,
+           #1e293b 10px,
+           #1e293b 20px
+       );
+       flex-grow: 1;
+   }
+
+   .card-featured .card-content {
+       background-color: var(--dark-blue);
+       padding: 25px 20px;
+       flex-grow: 0;
+   }
+
+   .card-featured .card-title,
+   .card-featured .arrow-icon {
+       color: white;
+   }
+
+   .card-featured .card-desc,
+   .card-featured .card-sku {
+       color: rgba(255, 255, 255, 0.7);
+   }
+
+   /* Yellowish Card Backgrounds */
+   .bg-yellow {
+       background-color: var(--light-yellow);
+   }
+
+   /* Responsive */
+   @@media (max-width: 1024px) {
+       .container {
+           grid-template-columns: 1fr 1fr;
+           grid-template-rows: auto;
+       }
+       .card-featured {
+           grid-row: span 1;
+           height: 400px;
+       }
+   }
+
+   @@media (max-width: 600px) {
+       .container {
+           grid-template-columns: 1fr;
+       }
+   }
+    section.py-20.bg-gray-50 {
+        background-color: #f5f6fb !important;
+    }
+    .text-white {
+        color: white !important
+    }
+    .card {
+        background: white;
+        border-radius: 24px;
+        padding: 32px;
+        width: 100%;
+        max-width: 900px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .tab-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+
+    .tab-active {
+        background-color: #000833;
+        color: white;
+    }
+
+    .tab-inactive {
+        color: #6b7280;
+    }
+
+    .input-field {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        width: 100%;
+        color: #1e293b;
+        font-weight: 500;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+        .input-field:focus {
+            border-color: #1e1b4b;
+        }
+
+    .label-text {
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+    }
+
+    .label-unit {
+        color: #cbd5e1;
+        font-weight: 400;
+        text-transform: lowercase;
+    }
+
+    .toggle-link {
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .toggle-active {
+        color: #1e1b4b;
+        border-bottom: 2px solid #eab308;
+        padding-bottom: 2px;
+    }
+
+    .toggle-inactive {
+        color: #94a3b8;
+    }
+
+    .search-btn {
+        background-color: #1e1b4b;
+        color: white;
+        padding: 12px 32px;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 18px;
+        transition: background-color 0.2s;
+    }
+
+        .search-btn:hover {
+            background-color: #312e81;
+        }
+
+    .info-text {
+        color: #94a3b8;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+@{
+    Layout = "_ColumnsOne";
+
+    var homepageTitle = await localizationService.GetLocalizedAsync(await storeContext.GetCurrentStoreAsync(), s => s.HomepageTitle);
+
+    //title
+    if (!string.IsNullOrEmpty(homepageTitle))
+    {
+        NopHtml.AddTitleParts(homepageTitle);
+    }
+
+    var homepageDescription = await localizationService.GetLocalizedAsync(await storeContext.GetCurrentStoreAsync(), s => s.HomepageDescription);
+
+    //meta
+    if (!string.IsNullOrEmpty(homepageDescription))
+    {
+        NopHtml.AddMetaDescriptionParts(homepageDescription);
+    }
+
+    //page class
+    NopHtml.AppendPageCssClassParts("html-home-page");
+}
+<div class="page home-page">
+    <div class="page-body">
+        @*-------------------------*@
+
+
+
+                <!-- Hero Section -->
+                <section class="hero-bg text-white py-20 px-4 relative overflow-hidden">
+                    <div class="max-w-4xl mx-auto text-center relative z-10">
+                        <div class="inline-block bg-white/10 backdrop-blur-md px-4 py-1 rounded-full text-[10px] mb-6 border border-white/20">
+                            <i class="fas fa-check-circle text-green-400 mr-2"></i> 25,487+ SKU's in stock — updated now
+                        </div>
+                        <h1 class="text-5xl font-bold mb-4 leading-tight">Find the exact part.<br>Source it <span class="italic">faster.</span></h1>
+                        <p class="text-white/70 text-sm mb-10 max-w-xl mx-auto">The B2B catalog for bearings, automotive, agriculture & industrial parts. Search by part number — or by exact dimensions.</p>
+                @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageTop })
+
+                        <!-- Search Interface -->
+                      @*   <div class="card">
+                            <!-- Main Tabs -->
+                            <div class="flex items-center gap-4 mb-8">
+                                <button class="tab-button tab-inactive">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    Search by item
+                                </button>
+                                <button class="tab-button tab-active">
+                                    <i class="fa-solid fa-ruler-combined"></i>
+                                    Search by dimensions
+                                </button>
+                            </div>
+
+                            <!-- Input Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+
+                                <!-- Section Template Function -->
+                                <div id="inner-section">
+                                    <div class="label-text">INNER Ø · D <span class="label-unit">mm</span></div>
+
+                                    <!-- Range Inputs -->
+                                    <div id="inner-range-inputs" class="flex gap-3 mb-3">
+                                        <input type="text" class="input-field" placeholder="From">
+                                        <input type="text" class="input-field" placeholder="To">
+                                    </div>
+
+                                    <!-- Exact Input -->
+                                    <div id="inner-exact-inputs" class="mb-3 hidden">
+                                        <input type="text" class="input-field" placeholder="Value">
+                                    </div>
+
+                                    <div class="flex gap-4">
+                                        <span onclick="toggleMode('inner', 'range')" id="inner-range-btn" class="toggle-link toggle-active">Range</span>
+                                        <span onclick="toggleMode('inner', 'exact')" id="inner-exact-btn" class="toggle-link toggle-inactive">Exact</span>
+                                    </div>
+                                </div>
+
+                                <div id="outer-section">
+                                    <div class="label-text">OUTER Ø · D <span class="label-unit">mm</span></div>
+
+                                    <div id="outer-range-inputs" class="flex gap-3 mb-3">
+                                        <input type="text" class="input-field" placeholder="From">
+                                        <input type="text" class="input-field" placeholder="To">
+                                    </div>
+
+                                    <div id="outer-exact-inputs" class="mb-3 hidden">
+                                        <input type="text" class="input-field" placeholder="Value">
+                                    </div>
+
+                                    <div class="flex gap-4">
+                                        <span onclick="toggleMode('outer', 'range')" id="outer-range-btn" class="toggle-link toggle-active">Range</span>
+                                        <span onclick="toggleMode('outer', 'exact')" id="outer-exact-btn" class="toggle-link toggle-inactive">Exact</span>
+                                    </div>
+                                </div>
+
+                                <div id="thickness-section">
+                                    <div class="label-text">THICKNESS · B <span class="label-unit">mm</span></div>
+
+                                    <div id="thickness-range-inputs" class="flex gap-3 mb-3">
+                                        <input type="text" class="input-field" placeholder="From">
+                                        <input type="text" class="input-field" placeholder="To">
+                                    </div>
+
+                                    <div id="thickness-exact-inputs" class="mb-3 hidden">
+                                        <input type="text" class="input-field" placeholder="Value">
+                                    </div>
+
+                                    <div class="flex gap-4">
+                                        <span onclick="toggleMode('thickness', 'range')" id="thickness-range-btn" class="toggle-link toggle-active">Range</span>
+                                        <span onclick="toggleMode('thickness', 'exact')" id="thickness-exact-btn" class="toggle-link toggle-inactive">Exact</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mt-4">
+                                <div class="info-text">
+                                    <i class="fa-solid fa-ruler"></i>
+                                    We match exact parts & verified equivalents.
+                                </div>
+                                <button class="search-btn">
+                                    Search by dimensions
+                                </button>
+                            </div>
+                        </div> *@
+
+                        <div class="mt-8 flex justify-center gap-8 text-[10px] text-white/60">
+                            <span><i class="fas fa-check text-green-400 mr-2"></i> 100% genuine & traceable</span>
+                            <span><i class="fas fa-check text-green-400 mr-2"></i> Quotes within hours</span>
+                            <span><i class="fas fa-check text-green-400 mr-2"></i> Dedicated account manager</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Features Section -->
+                <section class="py-12 bg-white border-b border-gray-100">
+                    <div class="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+                        <div class=" items-start gap-4">
+                            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-[#1a237e]">
+                                <img alt="ROTAT" src="/Themes/Prisma/Content/img/home5.png">
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm">Great value</h3>
+                                <p class="text-[10px] text-gray-500">The most competitive pricing for trade and bulk</p>
+                            </div>
+                        </div>
+                        <div class=" items-start gap-4">
+                            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-[#1a237e]">
+                                <img alt="ROTAT" src="/Themes/Prisma/Content/img/home4.png">
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm">Nationwide Delivery</h3>
+                                <p class="text-[10px] text-gray-500">Fast shipping to your facility, no matter where</p>
+                            </div>
+                        </div>
+                        <div class=" items-start gap-4">
+                            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-[#1a237e]">
+                                <img alt="ROTAT" src="/Themes/Prisma/Content/img/home3.png">
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm">Secure Payment</h3>
+                                <p class="text-[10px] text-gray-500">Our website uses 256-bit SSL encrypted checkout</p>
+                            </div>
+                        </div>
+                        <div class=" items-start gap-4">
+                            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-[#1a237e]">
+                                <img alt="ROTAT" src="/Themes/Prisma/Content/img/home2.png">
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm">365-Day Help Desk</h3>
+                                <p class="text-[10px] text-gray-500">Call us anytime<br>+971 4 886 5100</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Categories Section -->
+                <section class="py-20 bg-gray-50">
+                    <div class="max-w-6xl mx-auto">
+                        <div class="flex justify-between items-end mb-10">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Shop by category</span>
+                                <h2 class="text-3xl font-bold mt-2">Five categories.<br>One trusted source.</h2>
+                            </div>
+                            <a href="#" class="inline-flex items-center px-6 py-2 text-sm font-bold text-[#1a237e] bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors duration-200">
+                                Browse all products
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
+                            </a>
+
+                        </div>
+
+                        <div class="container">
+                            <!-- Bearings (Tall Card) -->
+                            <div class="card card-featured">
+                                <div class="stripes-overlay">
+                                    <div class="placeholder-text">Bearings Shot</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="arrow-icon">↗</div>
+                                    <div>
+                                        <h3 class="card-title">Bearings</h3>
+                                        <p class="card-desc">Ball, roller, tapered, units</p>
+                                    </div>
+                                    <div class="card-sku">24,800 SKUs</div>
+                                </div>
+                            </div>
+
+                            <!-- Automotive parts -->
+                            <div class="card">
+                                <div class="stripes-overlay">
+                                    <div class="placeholder-text">Automotive Parts Shot</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="arrow-icon">↗</div>
+                                    <div>
+                                        <h3 class="card-title">Automotive parts</h3>
+                                        <p class="card-desc">Engine, drivetrain, braking</p>
+                                    </div>
+                                    <div class="card-sku">31,200 SKUs</div>
+                                </div>
+                            </div>
+
+                            <!-- Agriculture parts -->
+                            <div class="card bg-yellow">
+                                <div class="stripes-overlay">
+                                    <div class="placeholder-text">Agriculture Parts Shot</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="arrow-icon">↗</div>
+                                    <div>
+                                        <h3 class="card-title">Agriculture parts</h3>
+                                        <p class="card-desc">Tractor, harvester, tillage</p>
+                                    </div>
+                                    <div class="card-sku">12,540 SKUs</div>
+                                </div>
+                            </div>
+
+                            <!-- Industrial parts -->
+                            <div class="card">
+                                <div class="stripes-overlay">
+                                    <div class="placeholder-text">Industrial Parts Shot</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="arrow-icon">↗</div>
+                                    <div>
+                                        <h3 class="card-title">Industrial parts</h3>
+                                        <p class="card-desc">Power transmission, motion</p>
+                                    </div>
+                                    <div class="card-sku">9,860 SKUs</div>
+                                </div>
+                            </div>
+
+                            <!-- Car parts -->
+                            <div class="card">
+                                <div class="stripes-overlay">
+                                    <div class="placeholder-text">Car Parts Shot</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="arrow-icon">↗</div>
+                                    <div>
+                                        <h3 class="card-title">Car parts</h3>
+                                        <p class="card-desc">Service, electrical, body</p>
+                                    </div>
+                                    <div class="card-sku">18,300 SKUs</div>
+                                </div>
+                            </div>
+
+                            <!-- Seals & gaskets -->
+                            <div class="card bg-yellow">
+                                <div class="stripes-overlay">
+                                    <div class="placeholder-text">Seals & Gaskets Shot</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="arrow-icon">↗</div>
+                                    <div>
+                                        <h3 class="card-title">Seals & gaskets</h3>
+                                        <p class="card-desc">Oil seals, O-rings, kits</p>
+                                    </div>
+                                    <div class="card-sku">7,420 SKUs</div>
+                                </div>
+                            </div>
+
+                            <!-- Belts & chains -->
+                            <div class="card">
+                                <div class="stripes-overlay">
+                                    <div class="placeholder-text">Belts & Chains Shot</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="arrow-icon">↗</div>
+                                    <div>
+                                        <h3 class="card-title">Belts & chains</h3>
+                                        <p class="card-desc">V-belts, timing, drive</p>
+                                    </div>
+                                    <div class="card-sku">5,180 SKUs</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Brands Section -->
+                <section class="py-16 bg-white border-y border-gray-100">
+                    <div class="max-w-6xl mx-auto px-4">
+                        <div class="flex justify-between items-center mb-10">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Brand Discovery</span>
+                                <h2 class="text-2xl font-bold mt-1">15+ trusted brands</h2>
+                            </div>
+                            <a href="#" class="inline-flex items-center px-6 py-2 text-sm font-bold text-[#1a237e] bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors duration-200">
+                                View all brands
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
+                            </a>
+                        </div>
+                        <div class="flex flex-wrap justify-between items-center gap-8">
+                            <span class="text-xl font-black text-gray-300 brand-logo">SKF</span>
+                            <span class="text-xl font-black text-gray-300 brand-logo">FAG</span>
+                            <span class="text-xl font-black text-gray-300 brand-logo">Timken</span>
+                            <span class="text-xl font-black text-gray-300 brand-logo">NSK</span>
+                            <span class="text-xl font-black text-gray-300 brand-logo">NTN</span>
+                            <span class="text-xl font-black text-gray-300 brand-logo">Koyo</span>
+                            <span class="text-xl font-black text-gray-300 brand-logo">INA</span>
+                            <span class="text-xl font-black text-gray-300 brand-logo">NACHI</span>
+                            <span class="text-xl font-black text-gray-300 brand-logo">Bosch</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Popular Products -->
+                <section class="py-20 px-4">
+                    <div class="max-w-6xl mx-auto">
+                        <div class="flex justify-between items-end mb-10">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Fast moving this week</span>
+                                <h2 class="text-3xl font-bold mt-2">Popular with buyers</h2>
+                            </div>
+                            <a href="#" class="inline-flex items-center px-6 py-2 text-sm font-bold text-[#1a237e] bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors duration-200">See all bestsellers <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg> </a>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <!-- Product Card 1 -->
+                            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden group">
+                                <div class="p-6 relative">
+                                    <span class="absolute top-4 left-4 bg-[#1a237e] text-white text-[8px] font-bold px-2 py-1 rounded">Best seller</span>
+                                    <div class="aspect-square bg-gray-50 rounded-xl mb-6 flex items-center justify-center">
+                                        <div class="w-20 h-20 border-8 border-gray-200 rounded-full"></div>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-[10px] font-bold text-[#1a237e]">SKF</span>
+                                        <span class="text-[10px] text-green-500"><i class="fas fa-circle text-[6px] mr-1"></i> In stock: 142</span>
+                                    </div>
+                                    <h3 class="text-xs font-bold mb-1">6204-2RSH Deep groove ball bearing</h3>
+                                    <p class="text-[8px] text-gray-400 mb-4">SKU: 6204-2RSH</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-sm">AED 17.60</span>
+                                      
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Product Card 2 -->
+                            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden group">
+                                <div class="p-6 relative">
+                                    <div class="aspect-square bg-gray-50 rounded-xl mb-6 flex items-center justify-center">
+                                        <div class="w-20 h-20 border-8 border-gray-200 rounded-full border-t-transparent"></div>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-[10px] font-bold text-[#1a237e]">Timken</span>
+                                        <span class="text-[10px] text-green-500"><i class="fas fa-circle text-[6px] mr-1"></i> In stock: 28</span>
+                                    </div>
+                                    <h3 class="text-xs font-bold mb-1">30205 Tapered roller bearing</h3>
+                                    <p class="text-[8px] text-gray-400 mb-4">SKU: 30205-TIMK</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-sm">AED 45.50</span>
+                                     
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Product Card 3 -->
+                            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden group">
+                                <div class="p-6 relative">
+                                    <span class="absolute top-4 left-4 bg-[#1a237e] text-white text-[8px] font-bold px-2 py-1 rounded">Best seller</span>
+                                    <div class="aspect-square bg-gray-50 rounded-xl mb-6 flex items-center justify-center">
+                                        <div class="w-24 h-4 bg-gray-200 rounded-full"></div>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-[10px] font-bold text-[#1a237e]">Gates</span>
+                                        <span class="text-[10px] text-orange-500"><i class="fas fa-circle text-[6px] mr-1"></i> On request</span>
+                                    </div>
+                                    <h3 class="text-xs font-bold mb-1">Micro-V multi-rib drive belt 6PK1195</h3>
+                                    <p class="text-[8px] text-gray-400 mb-4">SKU: 6PK1195</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-sm text-gray-400 italic">On request</span>
+                                    
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Product Card 4 -->
+                            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden group">
+                                <div class="p-6 relative">
+                                    <div class="aspect-square bg-gray-50 rounded-xl mb-6 flex items-center justify-center">
+                                        <div class="w-20 h-20 border-8 border-gray-200 rounded-full"></div>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-[10px] font-bold text-[#1a237e]">FAG</span>
+                                        <span class="text-[10px] text-green-500"><i class="fas fa-circle text-[6px] mr-1"></i> In stock: 44</span>
+                                    </div>
+                                    <h3 class="text-xs font-bold mb-1">NU2205-E cylindrical roller bearing</h3>
+                                    <p class="text-[8px] text-gray-400 mb-4">SKU: NU2205-E-FAG</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-sm text-gray-400 italic">On request</span>
+                                     
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Articles Section -->
+                <section class="py-20 bg-gray-50">
+                    <div class="max-w-6xl mx-auto px-4">
+                        <div class="flex justify-between items-end mb-10">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">From the Rotat Journal</span>
+                                <h2 class="text-3xl font-bold mt-2">Latest articles</h2>
+                            </div>
+                            <a href="#" class="inline-flex items-center px-6 py-2 text-sm font-bold text-[#1a237e] bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors duration-200">
+                                All articles
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
+                            </a>
+
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <!-- Article 1 -->
+                            <div>
+                                <div class="aspect-video bg-gray-200 rounded-xl mb-4 overflow-hidden">
+                                    <div class="w-full h-full bg-gradient-to-br from-blue-100 to-white flex items-center justify-center">
+                                        <i class="fas fa-warehouse text-blue-200 text-4xl"></i>
+                                    </div>
+                                </div>
+                                <span class="bg-blue-50 text-[#1a237e] text-[8px] font-bold px-2 py-1 rounded">Company</span>
+                                <h3 class="text-xs font-bold mt-2 mb-2 leading-relaxed">ROTAT expands Jebel Ali warehouse to speed up GCC delivery</h3>
+                                <a href="#" class="inline-flex text-[10px] font-bold text-[#1a237e] pb-0.5">Read article <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg></a>
+                            </div>
+                            <!-- Article 2 -->
+                            <div>
+                                <div class="aspect-video bg-gray-200 rounded-xl mb-4 overflow-hidden">
+                                    <div class="w-full h-full bg-gradient-to-br from-yellow-50 to-white flex items-center justify-center">
+                                        <i class="fas fa-microscope text-yellow-200 text-4xl"></i>
+                                    </div>
+                                </div>
+                                <span class="bg-yellow-50 text-yellow-700 text-[8px] font-bold px-2 py-1 rounded">Technical</span>
+                                <h3 class="text-xs font-bold mt-2 mb-2 leading-relaxed">Reading a failed bearing: 7 wear patterns and what they tell you</h3>
+                                <a href="#" class="inline-flex text-[10px] font-bold text-[#1a237e] pb-0.5">Read article <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg></a>
+                            </div>
+                            <!-- Article 3 -->
+                            <div>
+                                <div class="aspect-video bg-gray-200 rounded-xl mb-4 overflow-hidden">
+                                    <div class="w-full h-full bg-gradient-to-br from-red-50 to-white flex items-center justify-center">
+                                        <i class="fas fa-shield-virus text-red-200 text-4xl"></i>
+                                    </div>
+                                </div>
+                                <span class="bg-red-50 text-red-700 text-[8px] font-bold px-2 py-1 rounded">Industry</span>
+                                <h3 class="text-xs font-bold mt-2 mb-2 leading-relaxed">Spotting counterfeit bearings in the Gulf supply chain</h3>
+                                <a href="#" class="inline-flex text-[10px] font-bold text-[#1a237e] pb-0.5">Read article <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg></a>
+                            </div>
+                            <!-- Article 4 -->
+                            <div>
+                                <div class="aspect-video bg-gray-200 rounded-xl mb-4 overflow-hidden">
+                                    <div class="w-full h-full bg-gradient-to-br from-green-50 to-white flex items-center justify-center">
+                                        <i class="fas fa-tractor text-green-200 text-4xl"></i>
+                                    </div>
+                                </div>
+                                <span class="bg-green-50 text-green-700 text-[8px] font-bold px-2 py-1 rounded">Agriculture</span>
+                                <h3 class="text-xs font-bold mt-2 mb-2 leading-relaxed">Stocking up for the 2024 harvest season</h3>
+                                <a href="#" class="inline-flex text-[10px] font-bold text-[#1a237e] pb-0.5">Read article <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg></a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Call to Action Section -->
+                <section class="py-20 px-4">
+                    <div class="max-w-6xl mx-auto bg-[#1a237e] rounded-3xl p-12 text-white flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
+                        <div class="relative z-10 max-w-md">
+                            <h2 class="text-3xl font-bold mb-4">Can't find a part?<br>We'll track it down.</h2>
+                            <p class="text-white/60 text-xs mb-8">Send the part number, a photo, or the dimensions. Our expert source-to-find network will search across our supplier network.</p>
+                            <div class="flex gap-4">
+                                <button class="bg-yellow-400 text-[#1a237e] px-6 py-3 rounded-full font-bold text-xs hover:bg-yellow-300 transition">Send an inquiry</button>
+                                <button class="bg-white/10 text-white px-6 py-3 rounded-full font-bold text-xs hover:bg-white/20 transition flex items-center">
+                                    <i class="fab fa-whatsapp mr-2 text-green-400"></i> Chat on WhatsApp
+                                </button>
+                            </div>
+                        </div>
+                        <div class="relative z-10 mt-12 md:mt-0 w-full md:w-auto">
+                            <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20">
+                                <h3 class="font-bold text-sm mb-2">Get stock alerts & new arrivals</h3>
+                                <p class="text-white/60 text-[10px] mb-4">Weekly 2-minute digest, including exclusive discounts.</p>
+                                <div class="flex gap-2">
+                                    <input type="email" placeholder="Email address" class="bg-white rounded-full px-4 py-2 text-xs text-slate-800 focus:outline-none w-full md:w-64">
+                                    <button class="bg-yellow-400 text-[#1a237e] px-6 py-2 rounded-full font-bold text-xs hover:bg-yellow-300 transition">Subscribe</button>
+                                </div>
+                                <p class="text-white/40 text-[8px] mt-4">By subscribing you agree to our <a href="#" class="underline">Privacy Policy</a>.</p>
+                            </div>
+                        </div>
+                        <!-- Background Decoration -->
+                        <div class="absolute -bottom-20 -left-20 w-64 h-64 border-[20px] border-white/5 rounded-full"></div>
+                        <div class="absolute -top-20 -right-20 w-64 h-64 border-[20px] border-white/5 rounded-full"></div>
+                    </div>
+                </section>
+
+
+
+
+
+
+
+        @*--------------------*@
+      
+        @await Component.InvokeAsync(typeof(TopicBlockViewComponent), new { systemName = "HomepageText" })
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBeforeCategories })
+        @await Component.InvokeAsync(typeof(HomepageCategoriesViewComponent))
+        @await Component.InvokeAsync(typeof(FilterLevelValueSearchViewComponent))
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBeforeProducts })
+        <div class="prisma-banners-3-widget-zone">
+            @await Component.InvokeAsync("Widget", new { widgetZone = "prisma_banners_3_widget_zone" })
+        </div>
+        <div class="prisma-banners-2-widget-zone">
+            @await Component.InvokeAsync("Widget", new { widgetZone = "prisma_banners_2_widget_zone" })
+        </div>
+        @await Component.InvokeAsync(typeof(HomepageProductsViewComponent))
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBeforeBestSellers })
+        @await Component.InvokeAsync(typeof(HomepageBestSellersViewComponent))
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBeforeNews })
+        @await Component.InvokeAsync(typeof(HomepageNewsViewComponent))
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBeforePoll })
+        @await Component.InvokeAsync(typeof(HomepagePollsViewComponent))
+        <div class="two-colums-wrapper">
+            @await Component.InvokeAsync("Widget", new { widgetZone = "prisma_home_page_two_columns" })
+        </div>
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HomepageBottom })
+    </div>
+</div>
+<script asp-location="Footer">
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const tabs = document.querySelectorAll('.tab-button');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+
+                tabs.forEach(t => {
+                    t.classList.remove('tab-active');
+                    t.classList.add('tab-inactive');
+                });
+
+                this.classList.remove('tab-inactive');
+                this.classList.add('tab-active');
+
+            });
+        });
+
+    });
+</script>

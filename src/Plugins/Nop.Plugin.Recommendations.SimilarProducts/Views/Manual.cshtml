@@ -1,0 +1,287 @@
+﻿@model List<Nop.Plugin.Recommendations.SimilarProducts.Models.Admin.SimilarityListItemModel>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    Layout = "_AdminLayout";
+    ViewBag.Title = "Similarities (Manual)";
+}
+
+<div class="content-header clearfix">
+    <h1 class="pull-left">Similarities (Manual)</h1>
+</div>
+
+<div class="content">
+    <div class="form-horizontal">
+        <form asp-action="Create" id="manual-create-form" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="panel panel-default">
+                <div class="panel-heading">Add Similarity</div>
+                <div class="panel-body">
+
+
+                    <div class="form-group">
+                        <label class="control-label col-md-2">Category</label>
+                        <div class="col-md-4">
+                            <select id="CategoryId" class="form-control js-category"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label col-md-2">Product</label>
+                        <div class="col-md-4">
+                            <select id="ProductId" name="ProductId" class="form-control js-product-autocomplete"></select>
+                        </div>
+
+                        <label class="control-label col-md-2">Similar Products</label>
+                        <div class="col-md-4">
+                            <!-- مهم: name="SimilarProductIds" و multiple -->
+                            <select id="SimilarProductId"
+                                    name="SimilarProductIds"
+                                    class="form-control js-product-autocomplete"
+                                    multiple="multiple"></select>
+                            <small class="text-muted">You can pick multiple similar products</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label col-md-2">Similarity %</label>
+                        <div class="col-md-4">
+                            <input type="number" class="form-control" name="SimilarityPercent" min="0" max="100" value="90" />
+                        </div>
+
+                        <div class="col-md-6 text-right">
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Latest records</div>
+            <div class="panel-body">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th>Similar Product</th>
+                            <th>Similarity %</th>
+                            <th>Created (UTC)</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var row in Model)
+                            {
+                                <tr>
+                                    <td>@row.Id</td>
+                                    <td>@row.ProductName (@row.ProductId)</td>
+                                    <td>@row.SimilarProductName (@row.SimilarProductId)</td>
+                                    <td>@row.SimilarityPercent</td>
+                                    <td>@row.CreatedOnUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <form asp-action="Delete" method="post" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@row.Id" />
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="6" class="text-center">No records</td></tr>
+                        }
+                    </tbody>
+                </table>
+
+                @{
+                    // paging بسيط جداً
+                    var page = (int)(ViewBag.Page ?? 1);
+                    var pageSize = (int)(ViewBag.PageSize ?? 20);
+                    var total = (int)(ViewBag.Total ?? 0);
+                    var totalPages = (int)System.Math.Ceiling(total / (double)pageSize);
+                }
+                @if (totalPages > 1)
+                {
+                    <nav>
+                        <ul class="pagination">
+                            @for (var i = 1; i <= totalPages; i++)
+                            {
+                                <li class="@(i == page ? "active" : "")">
+                                    <a href="@Url.Action("Manual", new { page = i, pageSize = pageSize })">@i</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    (function () {
+      // ========== URLs ==========
+      function spUrl() {
+        return '@Url.Action("SearchProducts", "RecommendationsSimilarProducts", new { area = "Admin" })';
+      }
+      function getCategoriesUrl() {
+        return '@Url.Action("GetCategories", "RecommendationsSimilarProducts", new { area = "Admin" })';
+      }
+
+      // ========== Helpers ==========
+      function optText(it) {
+        var txt = it.text || '';
+        if (it.sku) txt += ' | ' + it.sku;
+        if (it.id)  txt += '  (#' + it.id + ')';
+        return txt;
+      }
+
+      // ========== Category (Select2) ==========
+      function initCategory() {
+        var $cat = $('#CategoryId');
+        if (!$.fn.select2) return;
+
+        $cat.select2({
+          placeholder: 'Select category...',
+          ajax: {
+            url: getCategoriesUrl(),
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) { return { results: data }; }
+          }
+        });
+
+        $cat.on('change', function () {
+          clearAndPreload('#ProductId', true);
+          clearAndPreload('#SimilarProductId', false);
+        });
+      }
+
+      // ========== Product / Similar (Select2 + paging) ==========
+      function initProductAutocomplete(selector) {
+        var $el = $(selector);
+        if (!$.fn.select2) return;
+
+        var options = {
+          placeholder: 'Type to search products...',
+          minimumInputLength: 0,
+          ajax: {
+            url: spUrl(),
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+              var page = params.page || 1;
+              return {
+                term: params.term || '',
+                categoryId: $('#CategoryId').val() || 0,
+                page: page,
+                take: 20
+              };
+            },
+            processResults: function (data, params) {
+              params.page = params.page || 1;
+              return {
+                results: (data && data.items) ? data.items : [],
+                pagination: { more: data && data.hasMore }
+              };
+            }
+          },
+          templateResult: function (item) { return item.loading ? item.text : optText(item); },
+          templateSelection: function (item) { return item.text || item.id; }
+        };
+
+        if (selector === '#SimilarProductId') {
+          options.closeOnSelect = false; // multi UX
+        }
+
+        $el.select2(options);
+      }
+
+      // Prefetch أول صفحة من منتجات الكاتيجوري
+      function clearAndPreload(selector, openAfter) {
+        var $el = $(selector);
+        $el.val(null).trigger('change');
+
+        var categoryId = $('#CategoryId').val() || 0;
+        if (!categoryId) return;
+
+        $.getJSON(spUrl(), { term: '', categoryId: categoryId, page: 1, take: 20 })
+          .done(function (data) {
+            $el.find('option').remove();
+            (data.items || []).forEach(function (it) {
+              $el.append(new Option(optText(it), it.id, false, false));
+            });
+            if (openAfter && $el.hasClass('select2-hidden-accessible')) {
+              $el.select2('open');
+            }
+          });
+      }
+
+      // ========== Guards ==========
+      // لو غيّر المنتج الأساسي، شيل نفس الـ Product من قائمة الـ Similar
+      $(document).on('change', '#ProductId', function () {
+        var pid = $(this).val();
+        var $sim = $('#SimilarProductId');
+        var vals = $sim.val() || [];
+        var filtered = vals.filter(function (v) { return v !== pid; });
+        if (filtered.length !== vals.length) {
+          $sim.val(filtered).trigger('change');
+          alert('Removed same product from the similar list.');
+        }
+      });
+
+      // ========== Submit (تحويل المتعدد لـ hidden + LOG مضمون) ==========
+    $('#manual-create-form')
+      .off('submit.manual')                    // أضمن مفيش هاندلرز قديمة
+      .on('submit.manual', function (e) {
+        var $form = $(this);
+        var $sim  = $('#SimilarProductId');    // لاحظ: الـ id عندك SimilarProductId (مفرد)
+        var vals  = $sim.val() || [];
+        var pid   = $('#ProductId').val();
+
+        // checks
+        if (!pid || vals.length === 0) { e.preventDefault(); alert('اختر المنتج والأساميليز'); return false; }
+        if (vals.indexOf(pid) !== -1) { e.preventDefault(); alert('لازم منتجات مختلفة');     return false; }
+
+        // 1) امسح أي hidden قديمة بنفس الاسم
+        $form.find('input[name="SimilarProductIds"]').remove();
+
+        // 2) أهم خطوة: امنع الـ <select> إنه يشارك في الـ POST
+        //    شيل الـ name علشان حتى لو الـ disabled ما اشتغلش، مفيش قيمة تتبعت منه
+        var originalName = $sim.attr('name');          // هي "SimilarProductIds"
+        $sim.attr('name', '_ignoreSimilarProductIds'); // اسم مؤقت غير مستخدم
+        $sim.prop('disabled', true);                   // اختياري زيادة أمان
+
+        // 3) ضيف hidden inputs لكل قيمة مطلوبة بالاسم الصحيح اللي الموديل مستنيه
+        vals.forEach(function (v) {
+          $('<input>', { type: 'hidden', name: 'SimilarProductIds', value: v })
+            .appendTo($form);
+        });
+
+        // ==== Debug مؤكد قبل ما نسيب الصفحة ====
+        const fd = new FormData($form[0]);
+        console.groupCollapsed('%c[Manual POST payload]', 'color:#0b6cff;font-weight:bold');
+        console.table(Array.from(fd.entries())
+          .reduce((acc,[k,v]) => (acc[k] ? (Array.isArray(acc[k]) ? acc[k].push(v) : acc[k]=[acc[k],v]) : acc[k]=v, acc), {}));
+        console.log('Raw pairs:', Array.from(fd.entries())); // لازم تشوف SimilarProductIds مكررة
+        console.groupEnd();
+
+        // 4) خلي الـ submit يحصل بعد ما اللوج يظهر
+        e.preventDefault();
+        setTimeout(function () { $form[0].submit(); }, 0);
+      });
+
+      // ========== Init ==========
+      initCategory();
+      initProductAutocomplete('#ProductId');        // single
+      initProductAutocomplete('#SimilarProductId'); // multiple
+    })();
+</script>

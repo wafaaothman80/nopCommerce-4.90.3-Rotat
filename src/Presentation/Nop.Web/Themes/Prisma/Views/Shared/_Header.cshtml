@@ -1,0 +1,37 @@
+﻿
+<div class="header">
+    @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HeaderBefore })
+    <div class="header-logo">
+        @await Component.InvokeAsync(typeof(LogoViewComponent))
+    </div>
+    <div class="header-links-wrapper">
+        <div class="header-selectors-wrapper">
+            @await Component.InvokeAsync(typeof(TaxTypeSelectorViewComponent))
+            @await Component.InvokeAsync(typeof(CurrencySelectorViewComponent))
+            @await Component.InvokeAsync(typeof(LanguageSelectorViewComponent))
+            @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HeaderSelectors })
+            @*@if (Model.WishlistEnabled)
+            {
+                <div>
+                    <a href="@Url.RouteUrl(" Wishlist")" class="ico-wishlist">
+                        <span class="wishlist-label">@T("Wishlist")</span>
+                        <span class="wishlist-qty">@T("Wishlist.HeaderQuantity", Model.WishlistItems)</span>
+                    </a>
+                </div>
+            }*@
+        </div>
+        @await Component.InvokeAsync(typeof(HeaderLinksViewComponent))
+        @await Component.InvokeAsync(typeof(FlyoutShoppingCartViewComponent))
+    </div>
+   @*  <div class="search-box store-search-box" role="search">
+    	@await Component.InvokeAsync(typeof(SearchBoxViewComponent))
+    </div> *@
+    @*<div class="desktop-cart">
+        <div class="shopping-cart-link">
+            <a href="@url.routeurl("shoppingcart")">@t("shoppingcart")</a>
+            @await Component.InvokeAsync(typeof(FlyoutShoppingCartViewComponent))
+        </div>
+    </div>*@
+    @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HeaderAfter })
+
+</div>

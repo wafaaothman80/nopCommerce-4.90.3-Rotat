@@ -1,0 +1,11 @@
+﻿{
+  "Group": "AccountManager",
+  "FriendlyName": "AccountManager",
+  "SystemName": "AccountManager",
+  "Version": "4.90.4",
+  "SupportedVersions": [ "4.90" ],
+  "Author": "Smartly team",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.AccountManager.dll",
+  "Description": "This plugin Allow Account Managers To do his permissions"
+}
