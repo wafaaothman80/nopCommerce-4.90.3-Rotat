@@ -1,0 +1,130 @@
+@{
+    //page title
+    ViewBag.PageTitle = "Rotat Customizations";
+    //active menu item (system name)
+    NopHtml.SetActiveMenuItemSystemName("Rotat customizations");
+
+    var files = (List<string>)ViewBag.Files;
+    var selectedFile = (string)ViewBag.SelectedFile;
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">
+        Rotat Customizations — Technical Documentation
+    </h1>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="cards-group">
+            <div class="card card-default">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" style="margin-bottom: 15px;">
+                        @foreach (var f in files)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @(f == selectedFile ? "active" : "")"
+                                   href="@Url.Action("Index", "RotatDocs", new { file = f })">@f</a>
+                            </li>
+                        }
+                    </ul>
+
+                    <textarea id="mdSource" style="display:none;">@ViewBag.Content</textarea>
+
+                    <div id="doc-content" class="rotat-doc-content">
+                        Loading documentation...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .rotat-doc-content {
+        max-width: 1100px;
+        line-height: 1.6;
+        font-size: 14px;
+    }
+
+        .rotat-doc-content h1 {
+            font-size: 26px;
+            border-bottom: 2px solid #e3e6ea;
+            padding-bottom: 8px;
+            margin: 20px 0 15px;
+        }
+
+        .rotat-doc-content h2 {
+            font-size: 20px;
+            border-bottom: 1px solid #e3e6ea;
+            padding-bottom: 6px;
+            margin: 25px 0 12px;
+        }
+
+        .rotat-doc-content h3 {
+            font-size: 16px;
+            margin: 20px 0 10px;
+        }
+
+        .rotat-doc-content table {
+            border-collapse: collapse;
+            margin: 12px 0;
+            display: block;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        .rotat-doc-content th,
+        .rotat-doc-content td {
+            border: 1px solid #d2d6de;
+            padding: 6px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .rotat-doc-content th {
+            background: #f4f6f9;
+        }
+
+        .rotat-doc-content pre {
+            background: #f4f6f9;
+            border: 1px solid #e3e6ea;
+            border-radius: 4px;
+            padding: 12px;
+            overflow-x: auto;
+        }
+
+        .rotat-doc-content code {
+            background: #f4f6f9;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        .rotat-doc-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .rotat-doc-content blockquote {
+            border-left: 4px solid #d2d6de;
+            margin: 12px 0;
+            padding: 4px 15px;
+            color: #666;
+        }
+</style>
+
+<script src="~/js/marked.min.js"></script>
+<script>
+    (function () {
+        var source = document.getElementById('mdSource').value;
+        var target = document.getElementById('doc-content');
+        target.innerHTML = marked.parse(source);
+
+        //turn links between markdown files into links within this page
+        target.querySelectorAll('a[href$=".md"]').forEach(function (a) {
+            var name = a.getAttribute('href').split('/').pop();
+            a.setAttribute('href', '@Url.Action("Index", "RotatDocs")?file=' + encodeURIComponent(name));
+        });
+    })();
+</script>

@@ -992,6 +992,13 @@ public partial class AdminMenu : IAdminMenu
                     {
                         new()
                         {
+                            SystemName = "Rotat customizations",
+                            Title = "Rotat Customizations",
+                            Url = GetMenuItemUrl("RotatDocs", "Index"),
+                            IconClass = "far fa-dot-circle"
+                        },
+                        new()
+                        {
                             SystemName = "Training",
                             Title = await _localizationService.GetResourceAsync("Admin.Help.Training"),
                             Url = "https://www.nopcommerce.com/training?utm_source=admin-panel&utm_medium=menu&utm_campaign=course&utm_content=help",
