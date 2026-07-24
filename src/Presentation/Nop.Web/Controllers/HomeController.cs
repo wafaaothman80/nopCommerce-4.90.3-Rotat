@@ -64,10 +64,11 @@ public partial class HomeController : BasePublicController
     protected readonly IEmailSender _emailSender;
     protected readonly IEmailAccountService _emailAccountService;
     protected readonly IHttpClientFactory _httpClientFactory;
+    protected readonly DexatelSettings _dexatelSettings;
     public HomeController(HttpClient client, ICustomerService customerService, IAuthenticationService authenticationService, IWorkContext workContext, IHttpContextAccessor httpContextAccessor, ILocalizationService localizationService, INotificationService notificationService, Nop.Services.Logging.ILogger logger, IWebHelper webHelper
        , ICustomNumberFormatter customNumberFormatter, IOrderService orderService, IProductService productService,
         IEmailSender emailSender,
- IEmailAccountService emailAccountService, IHttpClientFactory httpClientFactory
+ IEmailAccountService emailAccountService, IHttpClientFactory httpClientFactory, DexatelSettings dexatelSettings
     )
     {
         _httpClient = client;
@@ -87,6 +88,7 @@ public partial class HomeController : BasePublicController
         _emailSender = emailSender;
         _emailAccountService = emailAccountService;
         _httpClientFactory = httpClientFactory;
+        _dexatelSettings = dexatelSettings;
     }
     static HomeController()
     {
@@ -409,7 +411,7 @@ public virtual async Task<IActionResult> CustomerOTP(string UserName)
 
        
         using var httpClient = _httpClientFactory.CreateClient();
-        httpClient.DefaultRequestHeaders.Add("X-Dexatel-Key", "218e25c2e5939f7b92654303f0a50b9d");
+        httpClient.DefaultRequestHeaders.Add("X-Dexatel-Key", _dexatelSettings.ApiKey);
         httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
     
@@ -418,9 +420,9 @@ public virtual async Task<IActionResult> CustomerOTP(string UserName)
             data = new
             {
                 channel = "SMS",
-                sender = "Dexatel",   
+                sender = _dexatelSettings.Sender,
                 phone = UserName,                 
-                template = "9c9dcaa2-990a-45c2-9efd-ae0bd4d63cbf", 
+                template = _dexatelSettings.TemplateId,
                 code = otp                          
             }
         };
@@ -431,23 +433,25 @@ public virtual async Task<IActionResult> CustomerOTP(string UserName)
         var response = await httpClient.PostAsync(
             "https://api.dexatel.com/v1/verifications", content);
 
-       
+        var responseBody = await response.Content.ReadAsStringAsync();
+
         if (response.StatusCode == HttpStatusCode.Created)
         {
             otpStatus = "Done";
+            await _logger.InformationAsync(
+                $"Dexatel OTP sent. Phone: {UserName}, Sender: {_dexatelSettings.Sender}, Template: {_dexatelSettings.TemplateId}, Status: {(int)response.StatusCode} {response.StatusCode}, Response: {responseBody}");
         }
         else
         {
-        
-            var errorBody = await response.Content.ReadAsStringAsync();
-          
             otpStatus = "Failed";
+            await _logger.ErrorAsync(
+                $"Dexatel OTP failed. Phone: {UserName}, Sender: {_dexatelSettings.Sender}, Template: {_dexatelSettings.TemplateId}, Status: {(int)response.StatusCode} {response.StatusCode}, Response: {responseBody}");
         }
     }
     catch (Exception ex)
     {
-        
         otpStatus = "Failed";
+        await _logger.ErrorAsync($"Dexatel OTP exception. Phone: {UserName}", ex);
     }
 
   
@@ -779,7 +783,7 @@ public virtual async Task<string> ConfirmCustomerOTP(int CID, string OTP, string
                 [CreatedOnUtc] DATETIME      NOT NULL DEFAULT GETUTCDATE()
             )");
 
-            // حفظ الطلب
+           
             await db.ExecuteNonQueryAsync(@"
             INSERT INTO [dbo].[NS_CreditRequests]
                 ([CustomerId],[RequestType],[Amount],[Reason])

@@ -206,8 +206,8 @@ public partial class ShippingService : IShippingService
 
         //product weight
         var productWeight = !product.IsFreeShipping || !ignoreFreeShippedItems ? product.Weight : decimal.Zero;
-        // by wafaa 23-6-2026
-        productWeight = productWeight * 1.25m;
+        // by wafaa 23-6-2026 — overhead factor from setting shippingsettings.weightoverheadfactor
+        productWeight = productWeight * (1m + _shippingSettings.WeightOverheadFactor);
         //attribute weight
         var attributesTotalWeight = decimal.Zero;
 
@@ -267,8 +267,8 @@ public partial class ShippingService : IShippingService
         foreach (var attributeValue in await attributeValues.SelectMany(x => x.values).ToListAsync())
             totalWeight += attributeValue.WeightAdjustment;
 
-        // added by wafaa 
-        var overheadFactor = 0.25m;
+        // added by wafaa — overhead factor from setting shippingsettings.weightoverheadfactor
+        var overheadFactor = _shippingSettings.WeightOverheadFactor;
         await _logger.InformationAsync(
    $"Weight before overhead: {totalWeight}"
 );

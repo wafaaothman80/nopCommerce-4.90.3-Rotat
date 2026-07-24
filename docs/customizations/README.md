@@ -9,6 +9,7 @@ The customization inventory below was produced by a **file-level diff against pr
 |---|---|---|
 | 1 | Main menu — hide categories without products | [01-menu-hide-empty-categories.md](01-menu-hide-empty-categories.md) |
 | 2 | Registration — phone sign-up with Dexatel OTP (incl. admin ERP onboarding) | [02-registration-dexatel-otp.md](02-registration-dexatel-otp.md) |
+| 3 | Quote cart — Algolia add-to-quote search & customer convert-to-order | [03-quote-cart-customizations.md](03-quote-cart-customizations.md) |
 
 ## Customization inventory (pending documentation)
 
@@ -19,7 +20,6 @@ Identified via diff; each item below is a candidate for its own chapter:
 | NetSuite ERP catalog sync | `HomeController` (`GetLatestBrands/GetLatestCategories/GetLatestProduct`), `NetSuiteApiConfig.cs`, `SdaScheduleTask.cs`, procs `InsertBrand/InsertCategory/InsertProduct/InsertSimilarProducts` | Pulls brands, categories, products (incl. dimensions, substitutes, stock) from NetSuite RESTlet into nop tables via stored procedures. |
 | Credit & invoices (customer wallet) | `HomeController.CreditAndInvoices`, `SendCreditRequest`, `Views/Home/CreditAndInvoices.cshtml`, tables `NS_Wallet`, `NS_Wallet_ActivityHistory`, `NS_CreditRequests` | Customer credit dashboard fed from ERP (`objType=89`), wallet sync, credit-request emails. |
 | Dimension search | Route `DimensionSearch`, `DimensionSearchController` (plugin/controller), homepage "Search by Dimensions" UI | Search bearings by inner/outer diameter and thickness (range or exact). |
-| Quote requests | `CustomQuoteRequestController.cs` (new), QuoteCart/Actions RefAssemblies | "Request a quote" flow (header button, quote list badge). |
 | Catalog filters: in-stock / discount | `IProductService`/`ProductService` (`inStockOnly`, `discountOnly` params), `CatalogProductsCommand`, `CatalogModelFactory`, `_CatalogSelectors.cshtml`, `CatalogController` | Extra storefront product-list filters. |
 | Account managers module | `Account_Manager`, `AccountManager_CustomerMapping`, `CountryRigionMapping`, `AccountManagerRigionMapping` tables; admin `CustomerController`/`CustomerModelFactory`/`CustomerService`; role 6 restrictions | AM assignment, primary AM, ERP sales-rep sync, and admin data-visibility scoping. |
 | Customer pricing factors (COD / customer type) | `CustomerType.cs`, `CODFactors.cs`, `Nop.Plugin.Factors` plugin, proc `UpdateFactorRoleMappingsToCustomer` | Role/factor-based pricing driven by customer type and COD country. |
@@ -36,3 +36,4 @@ Identified via diff; each item below is a candidate for its own chapter:
 - File paths are repo-relative; "stock" means identical to vanilla 4.90.3 (ignoring whitespace/line endings).
 - Stored procedures marked *(DB only)* exist in SQL Server but not in this repository.
 - Risk levels: 🔴 critical, 🟠 high, 🟡 moderate.
+- **Screenshots** live in `src/Presentation/Nop.Web/wwwroot/docs-screens/` and are referenced with absolute `/docs-screens/...` URLs so they render in the admin documentation page (**Help → Rotat Customizations**). When adding a screen, drop the `.png` there and reference it from the relevant document's *Screens* section.

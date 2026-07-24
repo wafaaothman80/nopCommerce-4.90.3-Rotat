@@ -555,6 +555,41 @@ public partial class CheckoutController : BasePublicController
         //add Erp Order // by wafaa 26-6
         try
         {
+            await CreateErpOrderAndChargeCreditAsync(order, customer);
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+
+
+        //disable "order completed" page?
+        if (_orderSettings.DisableOrderCompletedPage)
+        {
+            return RedirectToRoute(NopRouteNames.Standard.ORDER_DETAILS, new { orderId = order.Id });
+        }
+
+        //model
+        var model = await _checkoutModelFactory.PrepareCheckoutCompletedModelAsync(order);
+        return View(model);
+    }
+
+    //create the ERP sales order and, when the order was paid by credit wallet,
+    //charge the customer credit in ERP (objType=93) // by wafaa 25-7
+    protected virtual async Task CreateErpOrderAndChargeCreditAsync(Order order, Customer customer)
+    {
+        //guard: Completed can be reloaded — never create the ERP order (or charge credit) twice
+        MsSqlNopDataProvider msSqlNopDataProviderGuard = new MsSqlNopDataProvider();
+        DataParameter guardParam = new DataParameter("@OrderId", order.Id);
+        var existingErpOrderId = (await msSqlNopDataProviderGuard.QueryAsync<long?>(
+            "SELECT [ErpOrderId] FROM [dbo].[Order] WHERE [Id]=@OrderId", guardParam)).FirstOrDefault();
+        if (existingErpOrderId.HasValue && existingErpOrderId.Value > 0)
+        {
+            await _logger.InformationAsync($"ERPOrder skipped for order {order.Id} — already created (ErpOrderId={existingErpOrderId.Value}).");
+            return;
+        }
+
             var url = _config.ApiRoot + "&objType=11&objId=0";
 
             var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
@@ -629,29 +664,83 @@ public partial class CheckoutController : BasePublicController
                 // create sda order
                 //   await CreateSdaForOrderAsync(order.Id, ERPOrderId0.FirstOrDefault());
                 //   await _logger.InformationAsync($"CreateSdaForOrderAsync ({ERPOrderId0.FirstOrDefault()}) completed.");
+
+                //charge customer credit in ERP when the order was paid by credit wallet // by wafaa 25-7
+                if (order.PaymentMethodSystemName == "NopStation.Plugin.Payments.CreditWallet")
+                    await ChargeCustomerCreditAsync(order, customer,
+                        ERPCustomer.Result.FirstOrDefault().ERPCustomerId.ToString(), ERPOrderId);
             }
             else
             {
                 await _logger.ErrorAsync("ERPOrder failed: " + httpResponse.Content);
             }
+    }
 
-        }
-        catch (Exception)
+    //ChargeCustomerCredit (objType=93): creates a customer deposit in ERP against the sales order // by wafaa 25-7
+    protected virtual async Task ChargeCustomerCreditAsync(Order order, Customer customer, string erpCustomerId, int erpOrderId)
+    {
+        try
         {
+            //latest wallet activity row for this customer = the credit payment transaction
+            MsSqlNopDataProvider db = new MsSqlNopDataProvider();
+            DataParameter tp = new DataParameter("@CustomerId", customer.Id);
+            var paymentTransactionId = (await db.QueryAsync<int>(@"
+                SELECT TOP 1 [Id] FROM [dbo].[NS_Wallet_ActivityHistory]
+                WHERE [WalletCustomerId]=@CustomerId
+                ORDER BY [CreatedOnUtc] DESC, [Id] DESC", tp)).FirstOrDefault();
 
-            throw;
+            var url = _config.ApiRoot + "&objType=93&objId=0";
+            var payload = new
+            {
+                objType = 93,
+                objId = "0",
+                erpCustomerId = erpCustomerId,
+                creditAmount = order.OrderTotal,
+                order_id = erpOrderId,
+                message = $"Customer Order # {order.CustomOrderNumber}  Payment Transaction # {paymentTransactionId}"
+            };
+
+            var request = new RestRequest(url, Method.POST);
+            request.AddHeader("Content-Type", "application/json");
+            request.AddJsonBody(payload);
+
+            await _logger.InformationAsync($"[ChargeCustomerCredit] erpCustomerId={erpCustomerId} | creditAmount={order.OrderTotal} | order_id={erpOrderId} | order={order.Id}");
+
+            var response = await _restClient.ExecuteAsync(request);
+            await _logger.InformationAsync($"[ChargeCustomerCredit] StatusCode={response.StatusCode} | Content={response.Content}");
+
+            ChargeCustomerCreditResponseModel result = null;
+            if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content) && response.Content.TrimStart().StartsWith("{"))
+                result = JsonConvert.DeserializeObject<ChargeCustomerCreditResponseModel>(response.Content);
+
+            if (result != null && result.status)
+            {
+                await _orderService.InsertOrderNoteAsync(new OrderNote
+                {
+                    OrderId = order.Id,
+                    Note = $"ERP credit charged: customer deposit {result.depositNumber} (depositId {result.depositId}) created for ERP order {erpOrderId}.",
+                    DisplayToCustomer = false,
+                    CreatedOnUtc = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                await _logger.ErrorAsync($"[ChargeCustomerCredit] FAILED for order {order.Id} (ERP order {erpOrderId}) — Status:{response.StatusCode} | message:{result?.message} | exception:{result?.exception} | Body:{response.Content}");
+
+                await _orderService.InsertOrderNoteAsync(new OrderNote
+                {
+                    OrderId = order.Id,
+                    Note = $"ERP credit charge FAILED for ERP order {erpOrderId} — needs manual follow-up. Response: {result?.message ?? response.Content}",
+                    DisplayToCustomer = false,
+                    CreatedOnUtc = DateTime.UtcNow
+                });
+            }
         }
-
-
-        //disable "order completed" page?
-        if (_orderSettings.DisableOrderCompletedPage)
+        catch (Exception ex)
         {
-            return RedirectToRoute(NopRouteNames.Standard.ORDER_DETAILS, new { orderId = order.Id });
+            
+            await _logger.ErrorAsync($"[ChargeCustomerCredit] Exception for order {order.Id} (ERP order {erpOrderId}): {ex.Message}", ex);
         }
-
-        //model
-        var model = await _checkoutModelFactory.PrepareCheckoutCompletedModelAsync(order);
-        return View(model);
     }
 
     /// <summary>

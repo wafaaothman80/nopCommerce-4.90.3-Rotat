@@ -144,4 +144,11 @@ public partial class ShippingSettings : ISettings
     /// Gets or sets a value for sorting shipping methods (on the product/shopping cart page when the user selects a shipping method)
     /// </summary>
     public ShippingSortingEnum ShippingSorting { get; set; }
+
+    /// <summary>
+    /// Rotat customization: overhead factor applied to product weight when calculating shipping
+    /// (e.g. 0.25 = +25%). Setting name: shippingsettings.weightoverheadfactor.
+    /// Default 0.25 is used when no Setting record exists.
+    /// </summary>
+    public decimal WeightOverheadFactor { get; set; } = 0.25m;
 }

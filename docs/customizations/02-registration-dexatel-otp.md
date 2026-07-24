@@ -25,7 +25,8 @@ The feature is implemented in `HomeController` (public), two custom views, custo
 
 | Project | Folder | File | Status | Role |
 |---|---|---|---|---|
-| Nop.Web | `Controllers/` | `HomeController.cs` | **Rewritten (custom)** | All OTP actions + Dexatel call |
+| Nop.Web | `Controllers/` | `HomeController.cs` | **Rewritten (custom)** | All OTP actions + Dexatel call (`DexatelSettings` injected) |
+| Nop.Web | (root) | `DexatelSettings.cs` | **New** | `ISettings` class — `dexatelsettings.apikey`, `dexatelsettings.templateid` (Setting table) |
 | Nop.Web | `Views/Home/` | `RegisterCustomerOTP.cshtml` | **New** | Phone entry screen |
 | Nop.Web | `Views/Home/` | `CustomerOTP.cshtml` | **New** | OTP entry screen |
 | Nop.Web | `Infrastructure/` | `RouteProvider.cs` | **Modified** | Routes `RegisterCustomerOTP`, `CustomerOTP/{UserName}`, `ConfirmOTP/{CID}/{OTP}`, `SendCustomerOTP/...` |
@@ -64,7 +65,7 @@ The feature is implemented in `HomeController` (public), two custom views, custo
 There is no separate integration class; the HTTP call is made inline with `IHttpClientFactory`:
 
 - **Endpoint**: `POST https://api.dexatel.com/v1/verifications`
-- **Auth header**: `X-Dexatel-Key: 218e25c2e5939f7b92654303f0a50b9d` *(hardcoded in source — see Risks)*
+- **Auth header**: `X-Dexatel-Key: <DexatelSettings.ApiKey>` *(from the `Setting` table — `dexatelsettings.apikey`; there is **no code fallback** — if the setting record is missing, the key is null and every SMS send fails with `otpStatus = "Failed"`)*
 - **Payload** (serialized with `System.Text.Json`):
 
 ```json
@@ -72,7 +73,7 @@ There is no separate integration class; the HTTP call is made inline with `IHttp
     "channel":  "SMS",
     "sender":   "Dexatel",
     "phone":    "<full phone incl. country code>",
-    "template": "9c9dcaa2-990a-45c2-9efd-ae0bd4d63cbf",
+    "template": "<DexatelSettings.TemplateId>",
     "code":     "<4-digit OTP>"
 } }
 ```
@@ -98,8 +99,8 @@ No FluentMigrator migrations were added; schema objects were created directly in
 
 | Item | Where | Notes |
 |---|---|---|
-| Dexatel API key | Hardcoded in `HomeController.CustomerOTP` | Should move to `appsettings.json` / secrets. |
-| Dexatel template id | Hardcoded (`9c9dcaa2-…`) | Message template configured in the Dexatel dashboard. |
+| Dexatel API key | `DexatelSettings.ApiKey` (`Nop.Web\DexatelSettings.cs`) | Setting name `dexatelsettings.apikey` — Admin → Configuration → Settings → All settings (advanced). **Required**: no code fallback (the old hardcoded default is commented out); a missing/blank setting makes every OTP SMS fail. |
+| Dexatel template id | `DexatelSettings.TemplateId` | Setting name `dexatelsettings.templateid`. Must match a verification template in the Dexatel dashboard. **Required** — no code fallback. |
 | OTP expiry | Hardcoded `DateTime.Now.AddMinutes(-3)` in `ConfirmOTP`; mirrored client-side by a 180-second countdown in `CustomerOTP.cshtml`. |
 | Allowed country | Hardcoded in `RegisterCustomerOTP.cshtml` — `intlTelInput` options `onlyCountries: ['AE'], initialCountry: 'AE'`. |
 | nopCommerce settings assumed | `CustomerSettings.UsernamesEnabled = true` (phone as username); registration type Standard/AdminApproval as configured in Admin → Settings → Customer settings. |
@@ -249,10 +250,22 @@ The admin side completes the registration lifecycle (review → activate → pus
 - Registration username field arrives pre-filled with the verified phone.
 - Login (stock) works with username = phone + password.
 
+## Screens
+
+<figure>
+  <img src="/docs-screens/otp-phone-entry.png" alt="RegisterCustomerOTP page asking for the customer's phone number" style="max-width:100%;border:1px solid #d2d6de;border-radius:6px;">
+  <figcaption><strong>Caption:</strong> Step 1 of registration — <code>/en/RegisterCustomerOTP</code>. The customer enters a mobile number; the intl-tel-input widget supplies the country dial code and the Submit button stays disabled until at least 9 digits are typed. On submit the number is checked for uniqueness and the customer is redirected to the OTP entry screen, which triggers the Dexatel SMS.</figcaption>
+</figure>
+
+<!-- Screens still to capture and place in wwwroot/docs-screens/:
+  otp-code-entry.png  - the 4-box OTP entry screen with the 3:00 countdown (/CustomerOTP)
+  register-form.png   - the /register form with the username pre-filled with the verified phone
+-->
+
 ## Security Considerations / Risks
 
 1. **🔴 OTP is rendered in the page** — `CustomerOTP.cshtml` line 10: `<div class="REN">Your OTP @ViewBag.CustomerDBOTP</div>`. Anyone can read the code on screen/HTML source, defeating SMS verification entirely. This is debug leftover and must be removed.
-2. **🔴 Hardcoded secrets in source**: Dexatel API key in `HomeController`; NetSuite consumer/token secrets in `NetSuiteApiConfig.cs`. Anyone with repo access can send SMS on the account / hit the ERP. Move to configuration/secret storage and rotate the keys.
+2. **🟠 Secrets exposure (partially resolved)**: the Dexatel API key/template are now read from `DexatelSettings` (Setting table) and the hardcoded defaults are removed from active code — ✔. Remaining: the old key/template still appear as *comments* in `DexatelSettings.cs` and in git history — rotate the key in the Dexatel dashboard and delete the comments. NetSuite consumer/token secrets remain hardcoded in `NetSuiteApiConfig.cs`.
 3. **🟠 Brute-forceable confirmation**: `ConfirmCustomerOTP` is an unauthenticated GET with no rate limiting or attempt counter; a 4-digit space (10,000 codes) inside a 3-minute window is scriptable. Add attempt limits and/or lengthen the code.
 4. **🟠 Weak OTP generation**: `System.Random` is not cryptographically secure; use `RandomNumberGenerator`.
 5. **🟠 `ConfirmOTP` flips `Active`/`Deleted` on an arbitrary `CID`** supplied by the client. The OTP check constrains it, but combined with (3) this allows reactivating/activating arbitrary customer records.
@@ -267,7 +280,7 @@ The admin side completes the registration lifecycle (review → activate → pus
 ## Future Improvements
 
 - Remove the on-screen OTP output (single-line fix, highest priority).
-- Move Dexatel/NetSuite credentials to `appsettings.json` + secret store; rotate exposed keys; add a typed `DexatelSettings` (`ISettingService`) with an Admin configuration page.
+- ~~Add a typed `DexatelSettings`~~ ✔ done (Setting table). Remaining: rotate the previously exposed Dexatel key and remove it from code comments/history; move NetSuite credentials out of `NetSuiteApiConfig.cs`; optionally add a dedicated Admin configuration page for the Dexatel settings instead of *All settings (advanced)*.
 - Extract a `IDexatelSmsService` (typed `HttpClient` via `AddHttpClient`) and DTO classes; add retry + explicit user-facing error when the SMS send fails.
 - Replace `System.Random` with `RandomNumberGenerator.GetInt32`; add per-phone and per-IP rate limiting and max 3–5 verification attempts per OTP.
 - Script `CustomerSaveOTP`, `GetConfirmOTP`, ERP procs and the custom tables into source control (FluentMigrator migrations or `/db` folder).

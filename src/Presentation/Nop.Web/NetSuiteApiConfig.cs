@@ -248,6 +248,15 @@ public class substitutesItem
         public List<SalesRepItem> data { get; set; }
     }
 
+    public class ChargeCustomerCreditResponseModel
+    {
+        public bool status { get; set; }
+        public string message { get; set; }
+        public long? depositId { get; set; }
+        public string depositNumber { get; set; }
+        public object exception { get; set; }
+    }
+
     public class OredrResponceModel
     {
         public int ns_id { get; set; }

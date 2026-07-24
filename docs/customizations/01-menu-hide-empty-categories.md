@@ -147,6 +147,8 @@ Every Admin-area caller passes `showHidden: true` (e.g. category list, category 
 | Sitemap / search / breadcrumbs (use `GetAllCategoriesAsync` / `GetCategoryBreadCrumbAsync`) | ❌ No |
 | All Admin screens (`showHidden=true`) | ❌ No (by design) |
 
+> **⚠ Update (July 2026) — actual menu renderer on the live site.** The Prisma layout (`Themes/Prisma/Views/Shared/_Root.cshtml`, lines ~133–150) renders the header menu in two steps: it first invokes widget zone **`theme_header_menu`**; if that returns HTML it is used, otherwise it falls back to `MainMenuViewComponent`. On the live site the **SevenSpikes (Nop-Templates) Mega Menu plugin** (`Plugins/SevenSpikes.Nop.Plugins.MegaMenu`, compiled only — no source in repo) fills that widget zone, so the *plugin*, not the core menu pipeline, produces the visible menu. Menu content (Home / Product / News / Brands / Contact Us and the category boxes under Product) is edited in admin at `/Admin/MegaMenuAdmin/MenuEdit/1` (see the User Guide, *Edit the Website Menu*). The menu's **Product** item is configured in the plugin as an **"All categories"** item (nothing listed manually), and the storefront behavior — only categories with products appear — is confirmed on the live site by the site owner. The plugin resolves categories through `ICategoryService`, which DI resolves to `FilteredCategoryService`, so the filter applies to the plugin's category listings in practice.
+
 ## Frontend Changes
 
 None. Views, JavaScript and CSS of the menu are the standard Prisma-theme menu files; they simply receive a smaller `MenuModel`. (The Prisma `MainMenu/Default.cshtml` adds mobile plus-button/back-button behavior, but that is theme styling, not part of this feature.)
@@ -159,7 +161,9 @@ None. Views, JavaScript and CSS of the menu are the standard Prisma-theme menu f
 
 ## Admin Changes
 
-None. Admin behavior is deliberately untouched via the `showHidden` guard.
+No admin *code* changes belong to this customization; admin category screens are deliberately untouched via the `showHidden` guard.
+
+Operationally, the storefront menu **content** is managed in admin through the Mega Menu plugin: **Nop-Templates → Plugins → Mega Menu** (`/Admin/MegaMenuAdmin/MenuEdit/1`) — items can be added from Pages / Categories / Manufacturers / Vendors / Topics / Product Tags / Custom Links and rearranged by drag & drop. Administrator instructions live in the User Guide (*UG-20 — Edit the Website Menu*).
 
 ## Website Changes
 
@@ -171,6 +175,18 @@ Before vs. after:
 | Parent with empty direct mapping but products in a grandchild | Shown | Shown (subtree check) |
 | Category with only unpublished / deleted / not-individually-visible products | Shown | Hidden |
 | Admin category tree & lists | All categories | All categories (unchanged) |
+
+## Screens
+
+<figure>
+  <img src="/docs-screens/homepage-header.png" alt="rotat.com homepage header with the main menu" style="max-width:100%;border:1px solid #d2d6de;border-radius:6px;">
+  <figcaption><strong>Caption:</strong> The storefront header on rotat.com. The main menu (Home · Product · News · Brands · Contact Us) is rendered by <code>MainMenuViewComponent</code>, whose category items come from the filtered category service documented on this page.</figcaption>
+</figure>
+
+<figure>
+  <img src="/docs-screens/menu-product-dropdown.png" alt="Product menu expanded, showing only categories that contain products" style="max-width:100%;border:1px solid #d2d6de;border-radius:6px;">
+  <figcaption><strong>Caption:</strong> The <em>Product</em> menu expanded. Only categories whose subtree contains at least one published product appear (Agriculture parts, Wheel Speed Sensors, Mechanical seals, Automotive Bearings, Industrial Bearings), and the flyout shows a child category with products (RASP BAR under Agriculture parts). Categories with no products stay hidden even when they are published in the admin panel.</figcaption>
+</figure>
 
 ## Performance Considerations
 
